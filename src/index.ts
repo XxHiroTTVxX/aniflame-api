@@ -10,4 +10,4 @@ const server = Bun.serve({
     },
   });
   
-  console.log(colors.blue(`Server is now listening on ${process.env.PORT}`));
+  console.log(colors.blue(`Server is now listening on http://localhost:${server.port}`));
