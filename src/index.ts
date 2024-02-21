@@ -1,7 +1,11 @@
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 const server = Bun.serve({
-    port: 3000,
+  port: process.env.PORT || 8080,
     fetch(req: Request) {
-      return new Response("Hello from Bun!");
+      return new Response("Hello Welcome to Aniflame API");
     },
   });
   
