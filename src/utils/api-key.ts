@@ -1,9 +1,10 @@
 import { CryptoHasher } from "bun";
 import { Database } from "bun:sqlite";
+import { randomBytes } from "crypto";
 
 function generateUniqueHashedApiKey(): string {
   const timestamp = Date.now();
-  const nonce = Math.random().toString().slice(2);
+  const nonce = randomBytes(16).toString('hex').slice(0, 16);
   const uniquePart = `${timestamp}-${nonce}`;
   const hasher = new CryptoHasher('sha256');
   hasher.update(uniquePart);
