@@ -1,15 +1,16 @@
 import { CryptoHasher } from "bun";
 import { Database } from "bun:sqlite";
 import { randomBytes } from "crypto";
+import colors from "colors";
 
 function generateUniqueHashedApiKey(): string {
   const timestamp = Date.now();
   const nonce = randomBytes(16).toString('hex').slice(0, 16);
-  const uniquePart = `${timestamp}-${nonce}`;
+  const uniquePart = `${timestamp}${nonce}`;
   const hasher = new CryptoHasher('sha256');
   hasher.update(uniquePart);
   const hash = hasher.digest('hex');
-  const key = `${timestamp}-${hash.substring(0, 28)}`;
+  const key = `${timestamp}${hash.substring(0, 28)}`;
   return key;
 }
 
@@ -32,4 +33,4 @@ async function addApiKeyToSQLite(apiKey: string, dbPath: string) {
 
 const newApiKey = generateUniqueHashedApiKey();
 addApiKeyToSQLite(newApiKey, './apiKeys.db');
-console.log(`New API key generated and stored: ${newApiKey}`);
+console.log(colors.green(`New API key generated and stored: ${newApiKey}`));
