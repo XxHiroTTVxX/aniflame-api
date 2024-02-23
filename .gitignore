@@ -177,3 +177,11 @@ dist
 # SQLite database files
 
 *.db
+
+# Proxies and such
+
+proxies.json
+animeProxies.json
+mangaProxies.json
+novelProxies.json
+metaProxies.json
