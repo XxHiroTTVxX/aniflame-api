@@ -13,7 +13,7 @@ export async function scrapeCorsProxies(): Promise<string> {
     if (!censysId || !censysSecret) {
         return colors.red("ERROR") + ": CENSYS_ID or CENSYS_SECRET not provided.";    
     }
-    const hits: { ip: string; port: number }[] = [];
+    const proxies: { ip: string; port: number }[] = [];
     let cursor: string | null = null;
     let currentRequest =  0;
 
@@ -30,26 +30,26 @@ export async function scrapeCorsProxies(): Promise<string> {
             data.result.hits.forEach(hit => {
                 hit.services.forEach(service => {
                     if (service.extended_service_name === "HTTP" || service.extended_service_name === "HTTPS") {
-                        hits.push({ ip: hit.ip, port: service.port });
+                        proxies.push({ ip: hit.ip, port: service.port });
                     }
                 });
             });
 
-            console.log(colors.gray("Fetched ") + colors.blue(hits.length + "") + colors.gray(" hits so far."));
+            console.log(colors.gray("Fetched ") + colors.blue(proxies.length + "") + colors.gray(" hits so far."));
 
             cursor = data.result.links.next;
             currentRequest++;
 
             if (cursor === null || cursor === "" || currentRequest >= MAX_REQUESTS) {
                 console.log(colors.green("Finished scraping CORS proxies."));
-                await Bun.write("./proxies.json", JSON.stringify(hits, null,  4));
+                await Bun.write("./proxies.json", JSON.stringify(proxies, null,   4));
                 await checkCorsProxies();
                 break;
             }
         } while (cursor !== null && cursor !== "" && currentRequest < MAX_REQUESTS);
 
         console.log(colors.green("Finished scraping CORS proxies."));
-        await Bun.write("./proxies.json", JSON.stringify(hits, null,  4));
+        await Bun.write("./proxies.json", JSON.stringify(proxies, null,   4));
         await checkCorsProxies();
         return "Scraping completed successfully.";
     } catch (error) {

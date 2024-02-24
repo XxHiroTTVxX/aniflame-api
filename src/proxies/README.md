@@ -8,7 +8,6 @@ This document provides an overview of the proxy functionalities implemented in t
 
 The original source code for the proxy functionalities can be found in the `Anify` project, under the `anify-backend` repository. The specific files related to proxy functionalities are located in the `src/proxies` directory. The key files include:
 
-- `checkProxies.ts`: Contains the logic for checking the availability and functionality of proxies.
 - `scrapeProxies.ts`: Implements the scraping of proxies from web pages.
 
 ## Integration into `aniflame-api`
