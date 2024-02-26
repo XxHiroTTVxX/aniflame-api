@@ -51,16 +51,11 @@ export const start = async () => {
     )
   );
   const server = Bun.serve({
+      development: true,
     port: process.env.PORT || 8080,
     fetch(req) {
       try {
         const url = new URL(req.url);
-        if (!Object.hasOwn(routes, url.pathname)) {
-          return new Response(JSON.stringify({ error: "Route not found" }), {
-            status: 404,
-            headers: { "Content-Type": "application/json" },
-          });
-        }
 
         if (url.pathname === "/") {
           return new Response(
@@ -71,6 +66,14 @@ export const start = async () => {
             }
           );
         }
+        
+        if (!Object.hasOwn(routes, url.pathname)) {
+          return new Response(JSON.stringify({ error: "Route not found" }), {
+            status: 404,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
 
         const apiKey = url.searchParams.get("apiKey");
         if (!apiKey) {
