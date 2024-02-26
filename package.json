@@ -2,6 +2,10 @@
   "name": "aniflame-api",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "apikey:generate": "bun run src/utils/apikeys/index.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
