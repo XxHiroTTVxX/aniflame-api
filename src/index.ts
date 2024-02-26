@@ -3,39 +3,74 @@ import colors from "colors";
 const db = new Database('./apiKeys.db');
 
 
-const validRoutes = ['/', '/another-route']; // Add all valid routes here
+const validRoutes = ['/', './another-route']; // Add all valid routes here
 db.exec(`CREATE TABLE IF NOT EXISTS api_keys (id INTEGER PRIMARY KEY AUTOINCREMENT, key TEXT)`);
 
+async function fetchData(route: string): Promise<{ message: string } | { data: any }> {
+  try {
+    const response = await fetch(route);
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    const responseData = await response.json();
+    console.log("Data fetched:", responseData);
+    if (responseData) {
+      return { data: responseData };
+    } else {
+      return { message: 'No data found' };
+    }
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return { message: 'No data found' };
+  }
+}
 
 const server = Bun.serve({
   port: process.env.PORT || 8080,
-  fetch(req) {
+  async fetch(req) {
     const url = new URL(req.url);
-
-    // Check if the requested route is valid
+    // Handle invalid routes first
     if (!validRoutes.includes(url.pathname)) {
-      return new Response("Sorry seems like that route doesn't exist please check the docs to see how to use Aniflame API", { status: 404 });
+      return new Response(JSON.stringify({ error: "Route not found" }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
+    // Handle the root path
     if (url.pathname === "/") {
-      return new Response("Hello Welcome to Aniflame API"); // Main route logic here; no API key required
+      return new Response(JSON.stringify({ message: "Welcome to Aniflame API!" }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    // Validate the API key for other routes
+    // Check for API key in the query parameters
     const apiKey = url.searchParams.get('apiKey');
     if (!apiKey) {
-      return new Response('Please provide an API key', { status: 400 });
+      return new Response(JSON.stringify({ error: 'Invalid API key' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
+    // Validate the API key against the database
     const stmt = db.prepare(`SELECT key FROM api_keys WHERE key = ?`);
     const validKey = stmt.get(apiKey);
     if (!validKey) {
-      return new Response('Invalid API key', { status: 401 });
+      return new Response(JSON.stringify({ error: 'Invalid API key' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    // Normal request processing
-    return new Response("Hello Welcome to Aniflame API");
-  },
+    // Fetch and await the data before returning the response
+    const data = await fetchData(url.pathname); // Await the promise from fetchData
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 });
 
-console.log(colors.green(`Server started on port http://localhost:${server.port}`));
+console.log(colors.blue(`Server started on port http://localhost:${server.port}`));
