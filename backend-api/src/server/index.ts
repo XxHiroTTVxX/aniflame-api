@@ -33,7 +33,7 @@ export const start = async () => {
       rateLimit: number;
     };
   } = {};
-  const routeFiles = [await import("./impl/another-route.ts")];
+  const routeFiles = [await import("./impl/info.ts")];
 
   for (const file of routeFiles) {
     const routeModule = await file;
