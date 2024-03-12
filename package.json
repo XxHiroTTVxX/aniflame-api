@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "bun run src/index.ts",
-    "apikey:generate": "bun run src/utils/apikeys/index.ts"
+    "generate:apikey": "bun run src/utils/apikeys/index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
@@ -13,8 +13,9 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@types/pg": "^8.11.2",
+    "cheerio": "^1.0.0-rc.12",
     "colors": "^1.4.0",
-    "discord.js": "^14.14.1",
-    "dotenv": "^16.4.5"
+    "ioredis": "^5.3.2"
   }
 }
