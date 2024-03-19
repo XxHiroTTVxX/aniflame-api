@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "bun run src/index.ts",
-    "generate:apikey": "bun run src/utils/apikeys/index.ts"
+    "generate:apikey": "bun run src/lib/key.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
@@ -14,8 +14,10 @@
   },
   "dependencies": {
     "@types/pg": "^8.11.2",
+    "axios": "^1.6.8",
     "cheerio": "^1.0.0-rc.12",
     "colors": "^1.4.0",
-    "ioredis": "^5.3.2"
+    "ioredis": "^5.3.2",
+    "pg": "^8.11.3"
   }
 }

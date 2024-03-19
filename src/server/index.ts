@@ -48,7 +48,7 @@ const rateLimitMiddleware = async (req: Request, apiKey: string, customLimit: nu
 // Function to load API keys from the database
 async function loadApiKeys() {
   try {
-    const result = await pool.query("SELECT key FROM api_keys");
+    const result = await pool.query("SELECT key, whitelisted FROM api_keys");
     const apiKeys = result.rows;
     console.log(
       colors.gray(
@@ -135,8 +135,8 @@ export const startServer = async () => {
           );
         }
         // Check if the API key is valid
-        const isValidApiKey = keys.some((key: any) => key.key === apiKey);
-        if (!isValidApiKey) {
+        const apiKeyDetails = keys.find((key: any) => key.key === apiKey);
+        if (!apiKeyDetails) {
           return new Response(
             JSON.stringify({ error: "Not valid API key" }),
             {
@@ -146,16 +146,28 @@ export const startServer = async () => {
           );
         }
 
-        // Apply rate-limiting middleware before processing the request
-        const route = routes[url.pathname];
-        if (route && route.rateLimit) {
-          const rateLimitResponse = await rateLimitMiddleware(req, apiKey, route.rateLimit);
-          if (rateLimitResponse) return rateLimitResponse;
+        // Apply rate-limiting middleware only if the key is not whitelisted
+        if (!apiKeyDetails.whitelisted) {
+          const route = routes[url.pathname];
+          if (route && route.rateLimit) {
+            const rateLimitResponse = await rateLimitMiddleware(req, apiKey, route.rateLimit);
+            if (rateLimitResponse) return rateLimitResponse;
+          }
         }
 
-        // Process the request
-        const routeHandler = routes[url.pathname].handler;
-        return routeHandler(req);
+        // Process the request if the key is whitelisted or rate limit is bypassed
+        const routeHandler = routes[url.pathname]?.handler;
+        if (routeHandler) {
+          return routeHandler(req);
+        } else {
+          return new Response(
+            JSON.stringify({ error: "Not Found" }),
+            {
+              status: 404,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+        }
       } catch (error) {
         console.error(
           colors.red(`Error handling request: ${(error as Error).message}`)
