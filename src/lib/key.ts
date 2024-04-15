@@ -38,7 +38,7 @@ async function addApiKeyToPostgres(apiKey: string, name: string, isWhitelisted: 
       INSERT INTO api_keys (key, name, whitelisted) 
       VALUES ($1, $2, $3) 
       ON CONFLICT (key) 
-      DO NOTHING`;
+      DO UPDATE SET name = $2, whitelisted = $3`;
     await client.query(insertApiKeyText, [apiKey, name, isWhitelisted]);
     await client.query("COMMIT");
   } catch (error) {
@@ -48,6 +48,7 @@ async function addApiKeyToPostgres(apiKey: string, name: string, isWhitelisted: 
     client.release();
   }
 }
+
 const newApiKey = generateUniqueHashedApiKey();
 const apiKeyName = process.argv[2] || 'unknown';
 const isWhitelisted = process.argv[3] === 'true' ? true : false;

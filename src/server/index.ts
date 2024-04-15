@@ -145,16 +145,6 @@ export const startServer = async () => {
             }
           );
         }
-
-        // Apply rate-limiting middleware only if the key is not whitelisted
-        if (!apiKeyDetails.whitelisted) {
-          const route = routes[url.pathname];
-          if (route && route.rateLimit) {
-            const rateLimitResponse = await rateLimitMiddleware(req, apiKey, route.rateLimit);
-            if (rateLimitResponse) return rateLimitResponse;
-          }
-        }
-
         // Process the request if the key is whitelisted or rate limit is bypassed
         const routeHandler = routes[url.pathname]?.handler;
         if (routeHandler) {
