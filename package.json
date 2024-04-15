@@ -4,15 +4,18 @@
   "type": "module",
   "scripts": {
     "start": "bun run src/index.ts",
-    "generate:apikey": "bun run src/lib/key.ts"
+    "generate:apikey": "bun run src/lib/key.ts",
+    "test": "jest"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "jest": "latest"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@types/jest": "^29.5.12",
     "@types/pg": "^8.11.2",
     "axios": "^1.6.8",
     "cheerio": "^1.0.0-rc.12",
