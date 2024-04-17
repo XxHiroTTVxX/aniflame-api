@@ -1,38 +1,37 @@
 // Import the createResponse function
 import { rateLimitMiddleware } from "../../lib/rateLimit"; // Import the middleware
 import { createResponse } from "../../lib/response";
+import AniList from "../../scrapers/anilist";
 
-// Define an array of names
-const names = [
-  "Alice",
-  "Bob",
-  "Charlie",
-  "Dave",
-  "Eve",
-  "Frank",
-  "Grace",
-  "Hannah",
-  "Ivan",
-  "Judy",
-];
+// Create an instance of the AniList class
+const aniList = new AniList();
 
-// Route handler
 export const handler = async (req: Request): Promise<Response> => {
-  // Extract the API key from query parameters for demonstration
-  const apiKey = req.url.split('?apiKey=')[1];
+  // Extract the AniList ID from the URL
+  const parts = req.url.split('/');
+  const aniListId = parts.length > 0 ? parts.pop() : undefined; // Get the last part of the URL
+
+  if (!aniListId) {
+    return createResponse(JSON.stringify({ error: "AniList ID not provided" }), 400);
+  }
 
   // Call the rateLimitMiddleware and await its response
-  const rateLimitResponse = await rateLimitMiddleware(req, apiKey, route.rateLimit);
+  const rateLimitResponse = await rateLimitMiddleware(req, aniListId, route.rateLimit);
   if (rateLimitResponse) return rateLimitResponse; // If rate limited, return the response
 
-  // Proceed with the original handler logic if not rate limited
-  return createResponse(JSON.stringify({ names }));
+  // Proceed with fetching data from AniList
+  const animeInfo = await aniList.getInfo("anime", parseInt(aniListId)); // Assuming the ID is for anime
+  if (!animeInfo) {
+    return createResponse(JSON.stringify({ error: "Failed to fetch anime information" }), 500);
+  }
+
+  return createResponse(JSON.stringify({ animeInfo }));
 };
 
+
 // Define the route
-// Define the route with a custom rate limit
 const route = {
-  path: "/info",
+  path: "/info/:aniListId", // Updated route path to accept AniList ID as a parameter
   handler,
   rateLimit: 90, // Custom rate limit for this route
 };

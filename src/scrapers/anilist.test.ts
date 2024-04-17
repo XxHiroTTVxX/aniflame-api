@@ -1,9 +1,7 @@
-// testAniList.ts
 import AniList from './AniList';
 
 describe('AniList', () => {
     let aniList: AniList;
-
     beforeAll(() => {
         aniList = new AniList();
     });
