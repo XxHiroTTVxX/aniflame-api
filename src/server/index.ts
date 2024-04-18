@@ -6,6 +6,7 @@ import Redis from 'ioredis';
 // Connect to Redis using the URL from environment variables
 const redisUrl = getEnvVar('REDIS_URL');
 const redis = new Redis(redisUrl);
+export const cacheTime = getEnvVar('REDIS_CACHE_TIME') || 60 * 60 * 24 * 7 * 2;
 
 // Initialize the database
 const pool = new Pool({
@@ -92,10 +93,10 @@ export const startServer = async () => {
     const route = routeModule.default;
 
     if (route) {
-      const { path, handler, rateLimit } = route;
-      routes[path] = { path, handler, rateLimit };
+        const { path, handler, rateLimit } = route;
+        routes[path] = { path, handler, rateLimit };
     }
-  }
+}
 
   // Log the number of loaded routes
   console.log(

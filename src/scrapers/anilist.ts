@@ -25,6 +25,7 @@ interface MediaInfo {
 }
 
 class AniList {
+    [x: string]: any;
     private readonly api: string;
 
     constructor() {

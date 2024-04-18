@@ -1,4 +1,4 @@
-import AniList from './AniList';
+import AniList from './anilist';
 
 describe('AniList', () => {
     let aniList: AniList;
@@ -13,7 +13,7 @@ describe('AniList', () => {
     });
 
     test('Get manga info', async () => {
-        const mangaInfo = await aniList.getInfo("manga", 1);
+        const mangaInfo = await aniList.getInfo("manga", 21);
         expect(mangaInfo).toBeTruthy();
         console.log("Manga Info:", mangaInfo);
     });
