@@ -2,6 +2,7 @@ import { Pool } from "pg";
 import { getEnvVar } from "../utils/envUtils.ts";
 import colors from "colors";
 import Redis from 'ioredis';
+import { rateLimitMiddleware } from "../lib/rateLimit.ts";
 
 // Connect to Redis using the URL from environment variables
 const redisUrl = getEnvVar('REDIS_URL');
@@ -13,38 +14,6 @@ const pool = new Pool({
   connectionString: getEnvVar('POSTGRES_URL'),
 });
 pool.query("CREATE TABLE IF NOT EXISTS rate_limits (key TEXT PRIMARY KEY, count INT)");
-
-// Rate limit settings
-const WINDOW_SIZE = 60 * 1000; // Window size in milliseconds (e.g., 1 minute)
-
-const rateLimitMiddleware = async (req: Request, apiKey: string, customLimit: number): Promise<Response | undefined> => {
-  const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
-  const windowStart = currentTime - WINDOW_SIZE;
-
-  const key = `rateLimit:${apiKey}:${windowStart}`;
-
-  // Increment the count for the API key in the current window
-  const result = await pool.query("SELECT count FROM rate_limits WHERE key = $1", [key]);
-  const currentCount = result.rows[0] ? result.rows[0].count : 0;
-
-  if (currentCount === 0) {
-    // If this is the first request in the current window, insert the key with count 1
-    await pool.query("INSERT INTO rate_limits (key, count) VALUES ($1, 1)", [key]);
-  } else {
-    // Otherwise, increment the count
-    await pool.query("UPDATE rate_limits SET count = count + 1 WHERE key = $1", [key]);
-  }
-
-  if (currentCount > customLimit) {
-    // If the rate limit is exceeded, return a 429 response
-    return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
-      status: 429,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  // If the rate limit is not exceeded, proceed with the request
-};
 
 // Function to load API keys from the database
 async function loadApiKeys() {
@@ -147,9 +116,12 @@ export const startServer = async () => {
           );
         }
         // Process the request if the key is whitelisted or rate limit is bypassed
-        const routeHandler = routes[url.pathname]?.handler;
-        if (routeHandler) {
-          return routeHandler(req);
+        const pathName = `/${url.pathname.split("/").slice(1)[0]}`;
+
+        // Process the request if the key is whitelisted or rate limit is bypassed
+        if (routes[pathName]) {
+          const { handler } = routes[pathName]
+          return handler(req);
         } else {
           return new Response(
             JSON.stringify({ error: "Not Found" }),

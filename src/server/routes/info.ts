@@ -24,7 +24,7 @@ export const handler = async (req: Request): Promise<Response> => {
               })) as Body)
             : null;
 
-    const id = body?.id ?? paths[1] ?? url.searchParams.get("id") ?? null;
+    const id = paths[1] ?? url.searchParams.get("id") ?? null;
     if (!id) {
         return createResponse(JSON.stringify({ error: "No ID provided." }), 400);
     }
@@ -45,11 +45,11 @@ export const handler = async (req: Request): Promise<Response> => {
         return createResponse(cached);
     }
 
-      const data = await aniList.getInfo("anime", Number(id)); // Use aniList instance to call 'getInfo' method
+      const data = await aniList.getInfo("anime", parseInt(id)); // Use aniList instance to call 'getInfo' method
       if (!data) {
           return createResponse(JSON.stringify({ error: "No data found." }), 400);
       }
-      await redis.set(`info:${id}:${JSON.stringify(fields)}`, JSON.stringify(data), "EX", cacheTime);
+      await redis.set(`info:${id}:${JSON.stringify(fields)}`, JSON.stringify(data));
 
       return createResponse(JSON.stringify(data));
   } catch (e) {
