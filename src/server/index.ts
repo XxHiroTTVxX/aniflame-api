@@ -15,7 +15,6 @@ const pool = new Pool({
 });
 pool.query("CREATE TABLE IF NOT EXISTS rate_limits (key TEXT PRIMARY KEY, count INT)");
 
-// Function to load API keys from the database
 async function loadApiKeys() {
   try {
     const result = await pool.query("SELECT key, whitelisted FROM api_keys");
@@ -115,13 +114,23 @@ export const startServer = async () => {
             }
           );
         }
+
         // Process the request if the key is whitelisted or rate limit is bypassed
         const pathName = `/${url.pathname.split("/").slice(1)[0]}`;
 
         // Process the request if the key is whitelisted or rate limit is bypassed
         if (routes[pathName]) {
-          const { handler } = routes[pathName]
-          return handler(req);
+          const { handler, rateLimit } = routes[pathName];
+          if (apiKeyDetails.whitelisted) {
+            return handler(req);
+          } else {
+            const response = await rateLimitMiddleware(req, apiKey, rateLimit);
+            if (response) {
+              return response;
+            } else {
+              return handler(req);
+            }
+          }
         } else {
           return new Response(
             JSON.stringify({ error: "Not Found" }),

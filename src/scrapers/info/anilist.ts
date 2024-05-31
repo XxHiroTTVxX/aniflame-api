@@ -1,28 +1,6 @@
 // AniList.ts
-interface Character {
-    name: string;
-    image: string | null;
-}
-
-interface Relation {
-    title: string;
-    bannerImage: string | null;
-}
-
-interface MediaInfo {
-    id: number;
-    title: {
-        english: string | null;
-        romaji: string | null;
-        native: string | null;
-    };
-    coverImage: string | null;
-    bannerImage: string | null;
-    genres: string[];
-    description: string | null;
-    characters: Character[];
-    relations: Relation[];
-}
+// AniList.ts
+import type { MediaInfo } from "../../types/types";
 
 class AniList {
     [x: string]: any;

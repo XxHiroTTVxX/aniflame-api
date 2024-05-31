@@ -1,4 +1,4 @@
-import AniList from './anilist';
+import AniList from './info/anilist';
 
 describe('AniList', () => {
     let aniList: AniList;

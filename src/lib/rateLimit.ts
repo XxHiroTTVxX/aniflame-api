@@ -32,17 +32,17 @@ export const rateLimitMiddleware = async (req: Request, apiKey: string, customLi
       const key = `rateLimit:${apiKey}:${windowStart}`;
   
       const currentCount = await redis.incr(key);
-  
+
       if (currentCount === 1) {
         await redis.expire(key, WINDOW_SIZE);
       }
   
       if (currentCount > customLimit) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
-          status: 429,
-          headers: { "Content-Type": "application/json" },
+            status: 429,
+            headers: { "Content-Type": "application/json" },
         });
-      }
+    }
     } catch (error) {
       console.error(`Error checking whitelisted status: ${error}`);
     } finally {

@@ -11,7 +11,7 @@ const API_KEY = '17131416547102f118cb12d1f67f9bfbc4878731a';
 const URL = 'http://localhost:3000/info/21?apiKey=' + API_KEY;
 
 async function testRateLimit() {
-    const requestCount = 200; // Number of requests to send
+    const requestCount = 120; // Number of requests to send
     let successCount = 0;
     let rateLimitExceeded = 0;
 
