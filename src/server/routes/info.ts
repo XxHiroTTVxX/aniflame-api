@@ -2,11 +2,9 @@
 import { createResponse } from "../../lib/response";
 import AniList from "../../scrapers/info/anilist";
 import { Redis } from "ioredis";
-import { cacheTime } from "..";
 import { getEnvVar } from "../../utils/envUtils";
 import type { Body } from "../../types/types";
 
-// Create an instance of the AniList class
 const aniList = new AniList();
 const redisUrl = getEnvVar('REDIS_URL');
 const redis = new Redis(redisUrl);
@@ -60,7 +58,6 @@ export const handler = async (req: Request): Promise<Response> => {
 
 
 
-// Define the route
 const route = {
     path: "/info",
     handler,
