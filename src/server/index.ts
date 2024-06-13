@@ -52,10 +52,8 @@ export const startServer = async () => {
     };
   } = {};
 
-  // Import route files
   const routeFiles = [await import("./routes/info.ts")];
 
-  // Iterate over route files and add them to the routes
   for (const file of routeFiles) {
     const routeModule = await file;
     const route = routeModule.default;
@@ -66,14 +64,12 @@ export const startServer = async () => {
     }
 }
 
-  // Log the number of loaded routes
   console.log(
     colors.gray(
       `Loaded ${colors.yellow(Object.keys(routes).length + "")} route(s)`
     )
   );
 
-  // Start the server
   const server = Bun.serve({
     development: true,
     port: process.env.PORT || 8080,
@@ -81,7 +77,6 @@ export const startServer = async () => {
       try {
         const url = new URL(req.url);
 
-        // Handle the root path
         if (url.pathname === "/") {
           return new Response(
             JSON.stringify({ message: "Welcome to Aniflame API!" }),
@@ -92,7 +87,6 @@ export const startServer = async () => {
           );
         }
 
-        // Handle the case where the API key is not provided
         const apiKey = url.searchParams.get("apiKey");
         if (!apiKey) {
           return new Response(
@@ -103,7 +97,6 @@ export const startServer = async () => {
             }
           );
         }
-        // Check if the API key is valid
         const apiKeyDetails = keys.find((key: any) => key.key === apiKey);
         if (!apiKeyDetails) {
           return new Response(
@@ -115,10 +108,8 @@ export const startServer = async () => {
           );
         }
 
-        // Process the request if the key is whitelisted or rate limit is bypassed
         const pathName = `/${url.pathname.split("/").slice(1)[0]}`;
 
-        // Process the request if the key is whitelisted or rate limit is bypassed
         if (routes[pathName]) {
           const { handler, rateLimit } = routes[pathName];
           if (apiKeyDetails.whitelisted) {
@@ -155,7 +146,6 @@ export const startServer = async () => {
     },
   });
 
-  // Log the server start
   console.log(
     colors.blue(`Server started on port http://localhost:${server.port}`)
   );

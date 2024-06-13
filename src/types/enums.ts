@@ -3,30 +3,30 @@ export const enum Type {
     MANGA = "MANGA",
 }
 
-export const enum Sort {
-    SCORE = "averageRating",
-    POPULARITY = "averagePopularity",
-    TITLE = "title",
-    YEAR = "year",
-    TOTAL_EPISODES = "episodes",
-    TOTAL_CHAPTERS = "chapters",
-    TOTAL_VOLUMES = "volumes",
+export enum ProviderType {
+    INFORMATION = "INFORMATION",
 }
 
-export const Sorts = [Sort.SCORE, Sort.POPULARITY, Sort.TITLE, Sort.YEAR, Sort.TOTAL_EPISODES, Sort.TOTAL_CHAPTERS, Sort.TOTAL_VOLUMES];
-
-export const enum SortDirection {
-    ASC = "ASC",
-    DESC = "DESC",
-}
-
-export const enum ProviderType {
+export enum MediaType {
     ANIME = "ANIME",
     MANGA = "MANGA",
-    META = "META",
-    INFORMATION = "INFORMATION",
-    BASE = "BASE",
 }
+
+export const enum SubType {
+    DUB = "dub",
+    SUB = "sub",
+}
+
+
+export const enum MediaStatus {
+    FINISHED = "FINISHED",
+    RELEASING = "RELEASING",
+    NOT_YET_RELEASED = "NOT_YET_RELEASED",
+    CANCELLED = "CANCELLED",
+    HIATUS = "HIATUS",
+}
+
+
 
 export const enum Format {
     TV = "TV",
@@ -50,14 +50,6 @@ export const enum Season {
     SUMMER = "SUMMER",
     FALL = "FALL",
     UNKNOWN = "UNKNOWN",
-}
-
-export const enum MediaStatus {
-    FINISHED = "FINISHED",
-    RELEASING = "RELEASING",
-    NOT_YET_RELEASED = "NOT_YET_RELEASED",
-    CANCELLED = "CANCELLED",
-    HIATUS = "HIATUS",
 }
 
 export const enum Genres {
@@ -121,30 +113,4 @@ export const enum Genres {
     YAOI = "Yaoi",
     YURI = "Yuri",
     ZOMBIES = "Zombies",
-}
-
-export const enum SubType {
-    DUB = "dub",
-    SUB = "sub",
-}
-
-export const enum StreamingServers {
-    AsianLoad = "asianload",
-    GogoCDN = "gogocdn",
-    StreamSB = "streamsb",
-    MixDrop = "mixdrop",
-    UpCloud = "upcloud",
-    VidCloud = "vidcloud",
-    StreamTape = "streamtape",
-    VizCloud = "vidplay",
-    MyCloud = "mycloud",
-    Filemoon = "filemoon",
-    VidStreaming = "vidstreaming",
-    AllAnime = "allanime",
-    FPlayer = "fplayer",
-    Kwik = "kwik",
-    DuckStream = "duckstream",
-    DuckStreamV2 = "duckstreamv2",
-    BirdStream = "birdstream",
-    AnimeFlix = "animeflix",
 }

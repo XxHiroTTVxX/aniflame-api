@@ -5,10 +5,12 @@
   "scripts": {
     "start": "bun run src/index.ts",
     "generate:apikey": "bun run src/lib/key.ts",
-    "test": "jest"
+    "generate": "drizzle-kit generate",
+    "migrate": "drizzle-kit migrate"
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "drizzle-kit": "^0.22.7",
     "jest": "^29.7.0"
   },
   "peerDependencies": {
@@ -23,8 +25,11 @@
     "cheerio": "^1.0.0-rc.12",
     "colors": "^1.4.0",
     "crypto-js": "^4.2.0",
+    "drizzle-orm": "^0.31.2",
     "ioredis": "^5.3.2",
+    "nanoid": "^5.0.7",
     "pg": "^8.11.3",
+    "postgres": "^3.4.4",
     "ts-jest": "^29.1.4"
   }
 }
