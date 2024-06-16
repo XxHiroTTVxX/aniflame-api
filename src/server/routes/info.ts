@@ -2,7 +2,7 @@
 import { createResponse } from "../../lib/response";
 import AniList from "../../scrapers/info/anilist";
 import { Redis } from "ioredis";
-import { getEnvVar } from "../../utils/envUtils";
+import { getEnvVar } from "../../lib/envUtils";
 import type { Body } from "../../types/types";
 
 const aniList = new AniList();

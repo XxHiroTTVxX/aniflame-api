@@ -1,25 +1,20 @@
 import Redis from 'ioredis';
 import colors from "colors";
-import { Pool } from 'pg';
+import { db  } from "../db";
+import { apiKeys } from "../db/schema";
+import { getEnvVar } from '../lib/envUtils';
+import { eq } from 'drizzle-orm';
 
-
-import { getEnvVar } from '../utils/envUtils';
-
-// Assuming REDIS_URL is set in your environment variables
 const redisUrl = getEnvVar('REDIS_URL');
-const redis = new Redis(redisUrl); // Connect to Redis using the URL from environment variables
-const pool = new Pool({
-    connectionString: getEnvVar('POSTGRES_URL'),
-  });
+const redis = new Redis(redisUrl);
 
 redis.on('connect', () => console.log(colors.green('Succesfully Connected to Redis')));
 redis.on('error', (err) => console.error(colors.red('Redis Client Error'), err));
 
 export const rateLimitMiddleware = async (req: Request, apiKey: string, customLimit: number): Promise<Response | undefined> => {
-    const client = await pool.connect();
     try {
-      const result = await client.query('SELECT whitelisted FROM api_keys WHERE key = $1', [apiKey]);
-      const isWhitelisted = result.rows[0]?.whitelisted;
+      const result = await db.select({ whitelisted: apiKeys.whitelisted }).from(apiKeys).where(eq(apiKeys.key, apiKey)).limit(1);
+      const isWhitelisted = result[0]?.whitelisted;
   
       if (isWhitelisted) {
         console.log('Whitelisted API key detected, bypassing rate limit.');
@@ -45,7 +40,5 @@ export const rateLimitMiddleware = async (req: Request, apiKey: string, customLi
     }
     } catch (error) {
       console.error(`Error checking whitelisted status: ${error}`);
-    } finally {
-      client.release();
     }
   }

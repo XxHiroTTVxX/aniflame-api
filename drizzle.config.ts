@@ -1,11 +1,11 @@
-import { defineConfig } from "drizzle-kit";
-import { getEnvVar } from "./src/utils/envUtils";
+import { defineConfig } from 'drizzle-kit';
+
 
 export default defineConfig({
-  dialect: "postgresql",
-  schema: "./src/schema.ts",
-  out: "./drizzle",
+  schema: './src/db/schema.ts', // Ensure this path is correct
+  dialect: 'postgresql',
+  out: './drizzle',
   dbCredentials: {
-    url: `${getEnvVar('POSTGRES_URL')}`,
-  }
+    url: Bun.env.POSTGRES_URL!,
+  },
 });

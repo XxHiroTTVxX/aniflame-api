@@ -1,7 +1,9 @@
 import colors from "colors";
-import { Pool } from "pg";
-import { getEnvVar } from "../utils/envUtils";
+import { db  } from "../db";
+import { apiKeys } from "../db/schema";
+import { sql } from 'drizzle-orm' 
 
+// ensure you import the schema for apiKeys
 function generateUniqueHashedApiKey(): string {
   const timestamp = Date.now().toString();
   const array = new Uint8Array(16);
@@ -18,39 +20,30 @@ function generateUniqueHashedApiKey(): string {
   return key;
 }
 
-
-async function addApiKeyToPostgres(apiKey: string, name: string, isWhitelisted: boolean) {
-  const pool = new Pool({
-    connectionString: getEnvVar('POSTGRES_URL'),
-  });
-  const client = await pool.connect();
+async function addApiKeyToDrizzle(apiKey: string, name: string, isWhitelisted: boolean) {
   try {
-    await client.query("BEGIN");
-    const createTableText = `
-      CREATE TABLE IF NOT EXISTS api_keys (
-        id SERIAL PRIMARY KEY, 
-        key TEXT UNIQUE, 
-        name TEXT,
-        whitelisted BOOLEAN
-      )`;
-    await client.query(createTableText);
-    const insertApiKeyText = `
-      INSERT INTO api_keys (key, name, whitelisted) 
-      VALUES ($1, $2, $3) 
-      ON CONFLICT (key) 
-      DO UPDATE SET name = $2, whitelisted = $3`;
-    await client.query(insertApiKeyText, [apiKey, name, isWhitelisted]);
-    await client.query("COMMIT");
+    await db.insert(apiKeys).values({
+      key: apiKey,
+      name: name,
+      whitelisted: isWhitelisted
+    }).onConflictDoUpdate({
+      target: apiKeys.key,
+      set: {
+        name: name,
+        whitelisted: isWhitelisted
+      }
+    });
+    await db.execute(sql`COMMIT`);
   } catch (error) {
-    console.error(`Error adding API key to Postgres: ${error}`);
-    await client.query("ROLLBACK");
-  } finally {
-    client.release();
+    await db.execute(sql`ROLLBACK`);
+    console.error(`Error adding API key to Drizzle: ${error}`);
   }
 }
 
 const newApiKey = generateUniqueHashedApiKey();
 const apiKeyName = process.argv[2] || 'unknown';
 const isWhitelisted = process.argv[3] === 'true' ? true : false;
-await addApiKeyToPostgres(newApiKey, apiKeyName, isWhitelisted);
+await addApiKeyToDrizzle(newApiKey, apiKeyName, isWhitelisted);
 console.log(colors.green(`New API key generated and stored: ${newApiKey} (Name: ${apiKeyName}) (Whitelisted: ${isWhitelisted})`));
+
+process.exit();

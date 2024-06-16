@@ -1,8 +1,11 @@
 import { Pool } from "pg";
-import { getEnvVar } from "../utils/envUtils.ts";
+import { getEnvVar } from "../lib/envUtils.ts";
 import colors from "colors";
 import Redis from 'ioredis';
 import { rateLimitMiddleware } from "../lib/rateLimit.ts";
+import { db  } from "../db";
+import { apiKeys } from "../db/schema";
+
 
 // Connect to Redis using the URL from environment variables
 const redisUrl = getEnvVar('REDIS_URL');
@@ -13,18 +16,22 @@ export const cacheTime = getEnvVar('REDIS_CACHE_TIME') || 60 * 60 * 24 * 7 * 2;
 const pool = new Pool({
   connectionString: getEnvVar('POSTGRES_URL'),
 });
-pool.query("CREATE TABLE IF NOT EXISTS rate_limits (key TEXT PRIMARY KEY, count INT)");
 
 async function loadApiKeys() {
   try {
-    const result = await pool.query("SELECT key, whitelisted FROM api_keys");
-    const apiKeys = result.rows;
+    const result = await db
+      .select({
+        key: apiKeys.key,
+        whitelisted: apiKeys.whitelisted
+      })
+      .from(apiKeys);
+    const apiKeysData = result;
     console.log(
       colors.gray(
-        `Loaded ${colors.yellow(apiKeys.length.toString())} API key(s)`
+        `Loaded ${colors.yellow(apiKeysData.length.toString())} API key(s)`
       )
     );
-    return apiKeys;
+    return apiKeysData;
   } catch (error) {
     console.error(
       colors.red(`Error loading API keys: ${(error as Error).message}`)
@@ -33,6 +40,7 @@ async function loadApiKeys() {
     return [];
   }
 }
+
 
 // Function to start the server
 export const startServer = async () => {
