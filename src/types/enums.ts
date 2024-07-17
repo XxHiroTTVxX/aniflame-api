@@ -114,3 +114,24 @@ export const enum Genres {
     YURI = "Yuri",
     ZOMBIES = "Zombies",
 }
+
+export const enum StreamingServers {
+    AsianLoad = "asianload",
+    GogoCDN = "gogocdn",
+    StreamSB = "streamsb",
+    MixDrop = "mixdrop",
+    UpCloud = "upcloud",
+    VidCloud = "vidcloud",
+    StreamTape = "streamtape",
+    VizCloud = "vidplay",
+    MyCloud = "mycloud",
+    Filemoon = "filemoon",
+    VidStreaming = "vidstreaming",
+    AllAnime = "allanime",
+    FPlayer = "fplayer",
+    Kwik = "kwik",
+    DuckStream = "duckstream",
+    DuckStreamV2 = "duckstreamv2",
+    BirdStream = "birdstream",
+    AnimeFlix = "animeflix",
+}

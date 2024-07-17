@@ -1,7 +1,6 @@
 
 import Gogoanime from "./gogo";
 import { load } from "cheerio";
-import axios from "axios";
 import Redis from "ioredis";
 import { getEnvVar } from "../../../lib/envUtils";
 import { nanoid } from "nanoid";
@@ -11,7 +10,7 @@ import { anime } from "../../../db/schema";
 const base = "https://anitaku.so";
 const gogo = new Gogoanime(base, false);
 
-// Initialize Redis client
+// Initialize Redis 
 const redisUrl = getEnvVar("REDIS_URL");
 const cache = new Redis(redisUrl);
 
@@ -49,8 +48,9 @@ const insertAnimeToDb = async (animeData: any) => {
 // Function to seed anime
 const seedAnime = async (type: string, pages: number) => {
   for (let i = 0; i < pages; i++) {
-    const res = await axios.get(`${base}/${type}-anime.html?page=${i + 1}`);
-    const $ = load(res.data);
+    const res = await fetch(`${base}/${type}-anime.html?page=${i + 1}`);
+    const text = await res.text();
+    const $ = load(text);
 
     const ids: string[] = [];
 

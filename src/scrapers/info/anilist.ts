@@ -12,136 +12,107 @@ class AniList {
     async getInfo(mediaType: string, mediaId: number): Promise<MediaInfo | null> {
         const query = `
         query ($id: Int) {
-            Media(id: $id) {
-              id
-              idMal
-              title {
-                english
-                native
-                romaji
-                userPreferred
-              }
-              synonyms
-              countryOfOrigin
-              isLicensed
-              isAdult
-              externalLinks {
-                url
-                site
-                type
-                language
-              }
-              coverImage {
-                extraLarge
-                large
-                medium
-                color
-              }
-              bannerImage
-              season
-              seasonYear
-              description
+          Media(id: $id) {
+            id
+            idMal
+            title {
+              english
+              native
+              romaji
+              userPreferred
+            }
+            synonyms
+            countryOfOrigin
+            isLicensed
+            isAdult
+            externalLinks {
+              url
+              site
               type
-              format
-              status(version: 2)
-              episodes
-              duration
-              chapters
-              volumes
-              trailer {
-                id
-                site
-                thumbnail
-              }
-              genres
-              source
-              averageScore
-              popularity
-              meanScore
-              nextAiringEpisode {
-                airingAt
-                timeUntilAiring
-                episode
-              }
-              characters(sort: ROLE) {
-                edges {
-                  role
-                  node {
-                    id
-                    name {
-                      first
-                      middle
-                      last
-                      full
-                      native
-                      userPreferred
-                    }
-                    image {
-                      large
-                      medium
-                    }
-                  }
-                  voiceActors {
-                    image {
-                      large
-                      medium
-                    }
-                    name {
-                      first
-                      middle
-                      last
-                      full
-                      native
-                      alternative
-                      userPreferred
-                    }
-                  }
-                }
-              }
-              recommendations {
-                edges {
-                  node {
-                    id
-                    mediaRecommendation {
-                      id
-                      idMal
-                      title {
-                        romaji
-                        english
-                        native
-                        userPreferred
-                      }
-                      status(version: 2)
-                      episodes
-                      coverImage {
-                        extraLarge
-                        large
-                        medium
-                        color
-                      }
-                      bannerImage
-                      format
-                      chapters
-                      meanScore
-                      nextAiringEpisode {
-                        episode
-                        timeUntilAiring
-                        airingAt
-                      }
-                    }
-                  }
-                }
-              }
-              relations {
-                edges {
+              language
+            }
+            coverImage {
+              extraLarge
+              large
+              medium
+              color
+            }
+            bannerImage
+            season
+            seasonYear
+            description
+            type
+            format
+            status(version: 2)
+            episodes
+            duration
+            chapters
+            volumes
+            trailer {
+              id
+              site
+              thumbnail
+            }
+            genres
+            source
+            averageScore
+            popularity
+            meanScore
+            nextAiringEpisode {
+              airingAt
+              timeUntilAiring
+              episode
+            }
+            characters(sort: ROLE) {
+              edges {
+                role
+                node {
                   id
-                  relationType
-                  node {
-                    season
-                    seasonYear
+                  name {
+                    first
+                    middle
+                    last
+                    full
+                    native
+                    userPreferred
+                  }
+                  image {
+                    large
+                    medium
+                  }
+                }
+                voiceActors {
+                  image {
+                    large
+                    medium
+                  }
+                  name {
+                    first
+                    middle
+                    last
+                    full
+                    native
+                    alternative
+                    userPreferred
+                  }
+                }
+              }
+            }
+            recommendations {
+              edges {
+                node {
+                  id
+                  mediaRecommendation {
                     id
                     idMal
+                    title {
+                      romaji
+                      english
+                      native
+                      userPreferred
+                    }
                     status(version: 2)
+                    episodes
                     coverImage {
                       extraLarge
                       large
@@ -149,46 +120,75 @@ class AniList {
                       color
                     }
                     bannerImage
-                    title {
-                      romaji
-                      english
-                      native
-                      userPreferred
-                    }
-                    episodes
-                    chapters
                     format
-                    nextAiringEpisode {
-                      airingAt
-                      timeUntilAiring
-                      episode
-                    }
+                    chapters
                     meanScore
+                    nextAiringEpisode {
+                      episode
+                      timeUntilAiring
+                      airingAt
+                    }
                   }
                 }
-              }
-              studios {
-                edges {
-                  isMain
-                  node {
-                    id
-                    name
-                  }
-                  id
-                }
-              }
-              startDate {
-                year
-                month
-                day
-              }
-              endDate {
-                year
-                month
-                day
               }
             }
-          }`;
+            relations {
+              edges {
+                id
+                relationType
+                node {
+                  season
+                  seasonYear
+                  id
+                  idMal
+                  status(version: 2)
+                  coverImage {
+                    extraLarge
+                    large
+                    medium
+                    color
+                  }
+                  bannerImage
+                  title {
+                    romaji
+                    english
+                    native
+                    userPreferred
+                  }
+                  episodes
+                  chapters
+                  format
+                  nextAiringEpisode {
+                    airingAt
+                    timeUntilAiring
+                    episode
+                  }
+                  meanScore
+                }
+              }
+            }
+            studios {
+              edges {
+                isMain
+                node {
+                  id
+                  name
+                }
+                id
+              }
+            }
+            startDate {
+              year
+              month
+              day
+            }
+            endDate {
+              year
+              month
+              day
+            }
+          }
+        }`;
     
         const variables = { id: mediaId };
     

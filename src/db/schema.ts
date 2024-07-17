@@ -28,10 +28,7 @@ export const anime = pgTable(
   })
 );
 
-
-export const rate_limits = {
-    rateLimits: pgTable("rate_limits", {
-      key: text("key").primaryKey(),
-      count: text("count").$type<number>(),
-    }),
-  };
+export const rate_limits = pgTable("rate_limits", {
+  key: text("key").primaryKey(),
+  count: text("count").$type<number>(),
+});

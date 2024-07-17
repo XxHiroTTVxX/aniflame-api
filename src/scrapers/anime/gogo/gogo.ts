@@ -8,8 +8,11 @@ import { getEnvVar } from "../../../lib/envUtils";
 import CryptoJS from "crypto-js";
 import cache from "../../../lib/cache";
 import { eq } from 'drizzle-orm' 
+import crypto from 'crypto';
+
 
 import { anime } from "../../../db/schema";
+import { AES } from "../../../lib/AES";
 
 // Define types
 export enum GogoTypes {
@@ -258,7 +261,6 @@ export type GogoEpisode = {
       throw error;
     }
   }
-
   public async getEpisodeSource(episodeId: string) {
     const cacheKey = `source-${episodeId}`;
     if (this.useCache && this.cache) {
@@ -348,9 +350,19 @@ export type GogoEpisode = {
       );
       delete sources.advertising;
       delete sources.linkiframe;
-      
+
+  
       if (this.useCache && this.cache) {
         await cache.set(this.cache, cacheKey, sources, 60 * 10);
+      }
+      const headers = {};
+
+
+      sources.url = Bun.env.M3U8_URL + "/video/" + encrypt(sources.url) + "/" + headers + "/.m3u8";
+
+
+      function encrypt(data: string): string {
+          return encodeURIComponent(AES.Encrypt(data, Bun.env.SECRET_KEY || ''));
       }
 
       return sources;
@@ -359,7 +371,7 @@ export type GogoEpisode = {
       throw error;
     }
   }
-
+  
   private async scrapeCard(html: string): Promise<GogoCard[]> {
     const result: GogoCard[] = [];
     const $ = load(html);
