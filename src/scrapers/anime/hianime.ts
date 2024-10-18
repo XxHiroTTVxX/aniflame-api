@@ -1,31 +1,29 @@
 import { load } from "cheerio";
-import Extractor from "../../../lib/extractor";
-import { Format, Formats, StreamingServers, SubType } from "../../../types/enums";
-import type { Episode, Result, Source } from "../../../types/types";
+import Extractor from "../../lib/extractor";
+import { Format, Formats, StreamingServers, SubType } from "../../types/enums";
+import type { Episode, Result, Source } from "../../types/types";
 
-export default class Zoro  {
+export default class Hianime {
     rateLimit = 250;
-    id = "zoro";
+    id = "hianime";
     url = "https://hianime.to";
 
     formats: Format[] = [Format.MOVIE, Format.ONA, Format.OVA, Format.SPECIAL, Format.TV, Format.TV_SHORT];
 
-     get subTypes(): SubType[] {
+    get subTypes(): SubType[] {
         return [SubType.SUB, SubType.DUB];
     }
 
-     get headers(): Record<string, string> | undefined {
+    get headers(): Record<string, string> | undefined {
         return undefined;
     }
+
     async search(query: string): Promise<Result[] | undefined> {
-        const response = await fetch(`${this.url}/search?keyword=${encodeURIComponent(query)}`);
-        if (!response.ok) {
-            throw new Error("Failed to fetch search results");
-        }
-        const data = await response.text();
+        const data = await (await fetch(`${this.url}/search?keyword=${encodeURIComponent(query)}`)).text();
         const results: Result[] = [];
 
         const $ = load(data);
+
         const promises: Promise<void>[] = [];
 
         $(".film_list-wrap > div.flw-item").map((i, el) => {
@@ -41,9 +39,9 @@ export default class Zoro  {
                 const formatString: string = $(el).find("div.film-detail div.fd-infor span.fdi-item")?.first()?.text().toUpperCase();
                 const format: Format = Formats.includes(formatString as Format) ? (formatString as Format) : Format.UNKNOWN;
 
-                const req = await fetch(`${this.url}${id}`);
-                const text = await req.text();
-                const $$ = load(text);
+                const req = await (await fetch(`${this.url}${id}`)).text();
+
+                const $$ = load(req);
                 const jpTitle = $$($$("div.anisc-info-wrap div.anisc-info div.item").toArray()[1]).find("span.name").text();
                 const synonyms = $$($$("div.anisc-info-wrap div.anisc-info div.item").toArray()[2])
                     .find("span.name")
@@ -81,27 +79,14 @@ export default class Zoro  {
     async fetchEpisodes(id: string): Promise<Episode[] | undefined> {
         const episodes: Episode[] = [];
 
-        const response = await fetch(`${this.url}/ajax/v2/episode/list/${id.split("-").pop()}`, {
-            headers: {
-                "X-Requested-With": "XMLHttpRequest",
-                Referer: `${this.url}/watch/${id}`,
-            },
-        });
-
-        if (!response.ok) {
-            throw new Error("Failed to fetch episodes");
-        }
-
-        const data = await response.json() as { html?: string, status?: boolean, msg?: string };
-
-        console.log("fetchEpisodes response data:", data); // Log the response data
-
-        if (!data.html) {
-            if (data.msg) {
-                throw new Error(`Error fetching episodes: ${data.msg}`);
-            }
-            throw new Error("Invalid response data");
-        }
+        const data = (await (
+            await fetch(`${this.url}/ajax/v2/episode/list/${id.split("-").pop()}`, {
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                    Referer: `${this.url}/watch/${id}`,
+                },
+            })
+        ).json()) as { html: string };
 
         const $ = load(data.html);
 
@@ -134,7 +119,7 @@ export default class Zoro  {
         return episodes;
     }
 
-    async fetchSources(id: string, subType: SubType = SubType.SUB, server: StreamingServers = StreamingServers.VidCloud): Promise<Source | undefined> {
+     async fetchSources(id: string, subType: SubType = SubType.SUB, server: StreamingServers = StreamingServers.VidCloud): Promise<Source | undefined> {
         const result: Source = {
             sources: [],
             subtitles: [],
@@ -156,25 +141,15 @@ export default class Zoro  {
             return await new Extractor(serverURL, result).extract(server ?? StreamingServers.VidCloud);
         }
 
-        const response = await fetch(`${this.url}/ajax/v2/episode/servers?episodeId=${id.split("?ep=")[1]}`);
-        
-        if (!response.ok) {
-            throw new Error("Failed to fetch sources");
-        }
-
-        const data = await response.json() as { html?: string, status?: boolean, msg?: string };
-
-        console.log("fetchSources response data:", data); // Log the response data
-
-        if (!data.html) {
-            if (data.msg) {
-                throw new Error(`Error fetching sources: ${data.msg}`);
-            }
-            throw new Error("Invalid response data");
-        }
-
+        const data = (await (await fetch(`${this.url}/ajax/v2/episode/servers?episodeId=${id.split("?ep=")[1]}`)).json()) as { html: string };
         const $ = load(data.html);
 
+        /**
+         * vidtreaming -> 4
+         * rapidcloud  -> 1
+         * streamsb -> 5
+         * streamtape -> 3
+         */
         let serverId;
         switch (server) {
             case StreamingServers.VidCloud:
@@ -204,19 +179,8 @@ export default class Zoro  {
                 break;
         }
 
-        const req = await fetch(`${this.url}/ajax/v2/episode/sources?id=${serverId}`);
-        
-        if (!req.ok) {
-            throw new Error("Failed to fetch source link");
-        }
-
-        const reqData = await req.json() as { link?: string, msg?: string };
-
-        if (!reqData.link) {
-            throw new Error("Invalid source link");
-        }
-
-        return await this.fetchSources(reqData.link, subType, server ?? StreamingServers.VidCloud);
+        const req = (await (await fetch(`${this.url}/ajax/v2/episode/sources?id=${serverId}`)).json()) as { link: string };
+        return await this.fetchSources(req.link, subType, server ?? StreamingServers.VidCloud);
     }
 
     private retrieveServerId($: any, index: number, subOrDub: SubType) {

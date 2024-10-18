@@ -1,8 +1,8 @@
 
-import Gogoanime from "./gogo";
+import Gogoanime from "../gogo";
 import { load } from "cheerio";
 import Redis from "ioredis";
-import { getEnvVar } from "../../../lib/envUtils";
+import { getEnvVar } from "../../../utils/envUtils";
 import { nanoid } from "nanoid";
 import { db } from "../../../db";
 import { anime } from "../../../db/schema";

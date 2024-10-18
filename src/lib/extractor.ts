@@ -1,9 +1,9 @@
 import CryptoJS from "crypto-js";
 import { load } from "cheerio";
+import { env } from "process";
 import type { Source } from "../types/types";
 import { StreamingServers } from "../types/enums";
 import Http from "./request";
-
 
 /**
  * @description Extracts source links from the streaming servers. This class is very messy but it works.
@@ -35,6 +35,12 @@ export default class Extractor {
                     return await this.extractGogoCDN(this.url, this.result);
                 case StreamingServers.StreamTape:
                     return await this.extractStreamTape(this.url, this.result);
+                case StreamingServers.MyCloud:
+                    return await this.extractMyCloud(this.url, this.result);
+                case StreamingServers.Filemoon:
+                    return await this.extractFileMoon(this.url, this.result);
+                case StreamingServers.VizCloud:
+                    return await this.extractVizCloud(this.url, this.result);
                 case StreamingServers.Kwik:
                     return await this.extractKwik(this.url, this.result);
                 case StreamingServers.AllAnime:
@@ -118,8 +124,176 @@ export default class Extractor {
         return result;
     }
 
+    public async extractMyCloud(url: string, result: Source): Promise<Source> {
+        const proxy = env.NINEANIME_RESOLVER || "https://9anime.resolver.net";
+        const proxyKey: string = env.NINEANIME_KEY || `9anime`;
 
+        const lolToken = await (await fetch("https://mcloud.to/futoken")).text();
 
+        const m3u8Req = await fetch(`${proxy}/rawMcloud?apikey=${proxyKey}`, {
+            method: "POST",
+            body: JSON.stringify({
+                query: url,
+                futoken: lolToken,
+            }),
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+        const data = (await m3u8Req.json()) as { rawURL: string };
+
+        const m3u8File = data.rawURL;
+
+        const mainReq = (await (
+            await fetch(m3u8File, {
+                headers: { Referer: "https://vidstream.pro/", "X-Requested-With": "XMLHttpRequest" },
+            })
+        ).json()) as { result: { sources: { file: string }[]; tracks: { file: string; label: string; kind: string }[] } };
+
+        for (const track of mainReq.result?.tracks ?? []) {
+            result.subtitles.push({
+                url: track.file,
+                lang: track.label ?? track.kind,
+                label: track.label ?? track.kind,
+            });
+        }
+
+        const file = mainReq.result?.sources[0]?.file;
+
+        const req = await fetch(file, {
+            headers: { Referer: "https://vidstream.pro/", "X-Requested-With": "XMLHttpRequest" },
+        });
+
+        const resolutions = (await req.text()).match(/(RESOLUTION=)(.*)(\s*?)(\s*.*)/g);
+        resolutions?.forEach((res: string) => {
+            const index = file.lastIndexOf("/");
+            const quality = res.split("\n")[0].split("x")[1].split(",")[0];
+            const url = file.slice(0, index);
+            result.sources.push({
+                url: url + "/" + res.split("\n")[1],
+                quality: quality + "p",
+            });
+        });
+
+        // Master m3u8 file
+        result.sources.push({
+            quality: "auto",
+            url: file,
+        });
+
+        //result.headers = {}; // TEMP doesnt require proxy
+
+        return result;
+    }
+
+    public async extractFileMoon(url: string, result: Source): Promise<Source> {
+        const proxy = env.NINEANIME_RESOLVER || "https://9anime.resolver.com";
+        const proxyKey: string = env.NINEANIME_KEY || `9anime`;
+        const data = await (await fetch(`https://filemoon.sx/d/${url}`)).text();
+
+        const resolver = await fetch(`${proxy}/filemoon?apikey=${proxyKey}`, {
+            method: "POST",
+            body: JSON.stringify({
+                query: data,
+            }),
+        });
+
+        const resolverData = (await resolver.json()) as { url: string };
+
+        result.sources.push({
+            url: resolverData.url,
+            quality: "auto",
+        });
+
+        const resReq = await fetch(resolverData.url, { headers: { Referer: "https://9anime.pl" } });
+        const resolutions = (await resReq.text()).match(/(RESOLUTION=)(.*)(\s*?)(\s*.*)/g);
+
+        resolutions?.forEach((res: string) => {
+            const index = resolverData.url.lastIndexOf("/");
+            const quality = res.split("\n")[0].split("x")[1].split(",")[0];
+            const url = resolverData.url.slice(0, index);
+
+            result.sources.push({
+                url: url + "/" + res.split("\n")[1],
+                quality: quality + "p",
+            });
+        });
+
+        return result;
+    }
+
+    /**
+     * @description Requires a VizStream ID. Uses NineAnime resolver.
+     * @param vidStreamId VizStream ID
+     * @returns Promise<SubbedSource>
+     */
+    public async extractVizCloud(url: string, result: Source): Promise<Source> {
+        const proxy = env.NINEANIME_RESOLVER || "https://9anime.resolver.net";
+        const proxyKey: string = env.NINEANIME_KEY || `9anime`;
+
+        const futoken = await (await Http.request("9anime", false, "https://vidplay.site/futoken")).text();
+
+        const rawSource = (await (
+            await fetch(`${proxy}/rawVizcloud?query=${encodeURIComponent(url)}&apikey=${proxyKey}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: new URLSearchParams({
+                    query: url,
+                    futoken,
+                }),
+            })
+        ).json()) as { rawURL: string };
+
+        const source = (await (
+            await Http.request("9anime", false, rawSource.rawURL, {
+                headers: {
+                    referer: "https://vidplay.site/",
+                    "x-requested-with": "XMLHttpRequest",
+                },
+            })
+        )
+            .json()
+            .catch((err) => {
+                return err;
+            })) as { result: { sources: { file: string }[]; tracks: { file: string; label: string; kind: string }[] } };
+
+        if (!source.result?.tracks) return result;
+
+        for (const track of source.result?.tracks ?? []) {
+            result.subtitles.push({
+                url: track.file,
+                lang: track.label ?? track.kind,
+                label: track.label ?? track.kind,
+            });
+        }
+
+        const file = source.result?.sources[0]?.file;
+
+        const req = await fetch(file, {
+            headers: { Referer: "https://vidstream.pro/", "X-Requested-With": "XMLHttpRequest" },
+        });
+
+        const resolutions = (await req.text()).match(/(RESOLUTION=)(.*)(\s*?)(\s*.*)/g);
+        resolutions?.forEach((res: string) => {
+            const index = file.lastIndexOf("/");
+            const quality = res.split("\n")[0].split("x")[1].split(",")[0];
+            const url = file.slice(0, index);
+            result.sources.push({
+                url: url + "/" + res.split("\n")[1],
+                quality: quality + "p",
+            });
+        });
+
+        // Master m3u8 file
+        result.sources.push({
+            quality: "auto",
+            url: file,
+        });
+
+        return result;
+    }
 
     public async extractGogoCDN(url: string, result: Source): Promise<Source> {
         const keys = {
@@ -207,36 +381,10 @@ export default class Extractor {
     }
 
     public async extractStreamSB(url: string, result: Source): Promise<Source> {
-        throw new Error(`Method not implemented yet for ${url} and ${result}.`);
+        throw new Error("Method not implemented yet.");
     }
 
     public async extractVidCloud(url: string, result: Source): Promise<Source> {
-        const extractKey = async (): Promise<[number, number][] | null> => {
-            const script = await (await fetch(`${host}/js/player/a/prod/e1-player.min.js`)).text();
-
-            const startOfSwitch = script.lastIndexOf("switch");
-            const endOfCases = script.indexOf("partKeyStartPosition");
-            const switchBody = script.slice(startOfSwitch, endOfCases);
-
-            const nums: [number, number][] = [];
-            const matches = switchBody.matchAll(/:[a-zA-Z0-9]+=([a-zA-Z0-9]+),[a-zA-Z0-9]+=([a-zA-Z0-9]+);/g);
-            for (const match of matches) {
-                const innerNumbers: number[] = [];
-                for (const varMatch of [match[1], match[2]]) {
-                    const regex = new RegExp(`${varMatch}=0x([a-zA-Z0-9]+)`, "g");
-                    const varMatches = [...script.matchAll(regex)];
-                    const lastMatch = varMatches[varMatches.length - 1];
-                    if (!lastMatch) return null;
-                    const number = parseInt(lastMatch[1], 16);
-                    innerNumbers.push(number);
-                }
-
-                nums.push([innerNumbers[0], innerNumbers[1]]);
-            }
-
-            return nums;
-        };
-
         const host = "https://megacloud.tv";
         const id = url.split("/").pop()?.split("?")[0];
 
@@ -256,32 +404,29 @@ export default class Extractor {
 
         let { sources } = reqData as { sources: string };
 
-        //const decryptKey = ((await (await fetch(env.ZORO_EXTRACTOR ? `${env.ZORO_EXTRACTOR}/key/6` : "https://zoro.anify.tv/key/6")).json()) as { key: string }).key as string;
-        const key = await extractKey();
+        const decryptKey = ((await (await fetch("https://zoro.anify.tv/key/6")).json()) as { key: string }).key as string;
 
-        if (key != null) {
-            let extractedKey = "";
-            let strippedSources = sources;
-            let totalledOffset = 0;
-            key.forEach(([a, b]) => {
-                const start = a + totalledOffset;
-                const end = start + b;
-                extractedKey += sources.slice(start, end);
-                strippedSources = strippedSources.replace(sources.substring(start, end), "");
-                totalledOffset += b;
-            });
+        const encryptedURLTemp = sources?.split("");
 
-            sources = CryptoJS.AES.decrypt(strippedSources, extractedKey).toString(CryptoJS.enc.Utf8);
+        let key = "";
+
+        for (const index of JSON.parse(decryptKey)) {
+            for (let i = Number(index[0]); i < Number(index[1]); i++) {
+                key += encryptedURLTemp[i];
+                encryptedURLTemp[i] = "";
+            }
         }
 
+        sources = encryptedURLTemp.filter((x: any) => x !== "").join("");
+
         try {
-            sources = JSON.parse(sources);
+            sources = JSON.parse(CryptoJS.AES.decrypt(sources, key).toString(CryptoJS.enc.Utf8));
         } catch (e) {
             console.error(e);
             sources = "";
         }
 
-        if (!sources || sources.length === 0) {
+        if (!sources || sources === "") {
             return result;
         }
 
@@ -329,10 +474,13 @@ export default class Extractor {
 
         return result;
     }
+
     public async extractKwik(url: string, result: Source): Promise<Source> {
-        const req = await fetch(url);
-        const text = await req.text();
-        const match = text.match(/p\}.*kwik.*/g);
+        const host = "https://animepahe.com"; // Subject to change maybe.
+        const req = await fetch(url, { headers: { Referer: host } });
+        const match = load(await req.text())
+            .html()
+            .match(/p\}.*kwik.*/g);
         if (!match) {
             throw new Error("Video not found.");
         }
@@ -342,7 +490,6 @@ export default class Extractor {
         arr = arr.slice(arr.length - 5, -1);
         arr.unshift(l);
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const [p, a, c, k, e, d] = arr.map((x) => x.split(".sp")[0]);
 
         const formatted = format(p, a, c, k, e, {});
@@ -389,11 +536,11 @@ export default class Extractor {
     }
 
     public async extractStreamTape(url: string, result: Source): Promise<Source> {
-        throw new Error(`Method not implemented yet for ${url} and ${result}.`);
+        throw new Error("Method not implemented yet.");
     }
 
     public async extractFPlayer(url: string, result: Source): Promise<Source> {
-        throw new Error(`Method not implemented yet for ${url} and ${result}.`);
+        throw new Error("Method not implemented yet.");
     }
 
     public async extractAllAnime(url: string, result: Source): Promise<Source> {

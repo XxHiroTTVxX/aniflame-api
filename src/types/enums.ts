@@ -1,10 +1,24 @@
+// Gogo Enums
+
+export enum GogoTypes {
+    sub = 1,
+    dub = 2,
+    chinese = 3,
+  }
+// end
+
+
 export const enum Type {
     ANIME = "ANIME",
     MANGA = "MANGA",
 }
 
-export enum ProviderType {
+export const enum ProviderType {
+    ANIME = "ANIME",
+    MANGA = "MANGA",
+    META = "META",
     INFORMATION = "INFORMATION",
+    BASE = "BASE",
 }
 
 export enum MediaType {
@@ -25,6 +39,7 @@ export const enum MediaStatus {
     CANCELLED = "CANCELLED",
     HIATUS = "HIATUS",
 }
+
 
 
 

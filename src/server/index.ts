@@ -1,8 +1,8 @@
 import { Pool } from "pg";
-import { getEnvVar } from "../lib/envUtils.ts";
+import { getEnvVar } from "../utils/envUtils.ts";
 import colors from "colors";
 import Redis from 'ioredis';
-import { rateLimitMiddleware } from "../lib/rateLimit.ts";
+import { rateLimitMiddleware } from "../utils/rateLimit.ts";
 import { db  } from "../db";
 import { apiKeys } from "../db/schema";
 

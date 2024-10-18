@@ -1,59 +1,16 @@
 import { load } from "cheerio";
-
 import Redis from "ioredis";
+import CryptoJS from "crypto-js";
 import { Redis as client } from "ioredis";
 import { nanoid } from "nanoid";
-import { db } from "../../../db";
-import { getEnvVar } from "../../../lib/envUtils";
-import CryptoJS from "crypto-js";
-import cache from "../../../lib/cache";
+import { db } from "../../db";
+import { getEnvVar } from "../../utils/envUtils";
+import cache from "../../utils/cache";
 import { eq } from 'drizzle-orm' 
-import crypto from 'crypto';
-
-
-import { anime } from "../../../db/schema";
-import { AES } from "../../../lib/AES";
-
-// Define types
-export enum GogoTypes {
-  sub = 1,
-  dub = 2,
-  chinese = 3,
-}
-
-export type GogoRecentReleases = {
-  title: string;
-  image: string;
-  link: string;
-  type: "sub" | "dub" | "chinese";
-};
-
-export type GogoInfo = {
-  title: string;
-  image: string;
-  animeId: string;
-  type: "sub" | "dub";
-  description: string;
-  genres: string[];
-  released: string;
-  status: string;
-  episodes: GogoEpisode[];
-};
-
-export type GogoCard = {
-  id: string;
-  title: string;
-  image: string;
-  released: string;
-};
-
-export type GogoEpisode = {
-  title: string;
-  number: number;
-  episodeId: string;
-  type: "sub" | "dub";
-  animeId: string;
-};
+import { AES } from "../../utils/AES";
+import { anime } from "../../db/schema";
+import { GogoTypes } from "../../types/enums";
+import type { GogoCard, GogoRecentReleases, GogoInfo } from "../../types/types";
 
   const redisUrl = getEnvVar('REDIS_URL');
   class Gogoanime {
@@ -261,6 +218,9 @@ export type GogoEpisode = {
       throw error;
     }
   }
+
+
+
   public async getEpisodeSource(episodeId: string) {
     const cacheKey = `source-${episodeId}`;
     if (this.useCache && this.cache) {
@@ -355,17 +315,41 @@ export type GogoEpisode = {
       if (this.useCache && this.cache) {
         await cache.set(this.cache, cacheKey, sources, 60 * 10);
       }
-      const headers = {};
 
 
-      sources.url = Bun.env.M3U8_URL + "/video/" + encrypt(sources.url) + "/" + headers + "/.m3u8";
+      const M3U8_URL = Bun.env.M3U8_URL || "https://m3u8.aniflame.lol/";
 
-
-      function encrypt(data: string): string {
-          return encodeURIComponent(AES.Encrypt(data, Bun.env.SECRET_KEY || ''));
+      for (const key of Object.keys(sources)) {
+        if (Array.isArray(sources[key])) {
+          sources[key].forEach((source: { file: string; }) => {
+            source.file = `${M3U8_URL}video/${encodeUrl(source.file)}`;
+          });
+        } else {
+          sources[key].file = encodeUrl(`${M3U8_URL}${encodeUrl(sources[key].file)}`);
+        }
+      }
+      if (sources.track) {
+        if (Array.isArray(sources.track.tracks)) {
+          sources.track.tracks.forEach((track: { file: string; }) => {
+            track.file = `${M3U8_URL}${track.file}`;
+          });
+        } else {
+          sources.track.file = `${M3U8_URL}${sources.track.file}`;
+        }
+      }
+      
+      
+      function encodeUrl(url: string) {
+        const secretKey = Bun.env.SECRET_KEY;
+        if (!secretKey) {
+          throw new Error("SECRET_KEY is not defined");
+        }
+        return AES.Encrypt(url, secretKey);
       }
 
-      return sources;
+
+  return sources;
+
     } catch (error) {
       console.error("Error getting episode source:", error);
       throw error;

@@ -2,7 +2,7 @@ import Redis from 'ioredis';
 import colors from "colors";
 import { db  } from "../db";
 import { apiKeys } from "../db/schema";
-import { getEnvVar } from '../lib/envUtils';
+import { getEnvVar } from './envUtils';
 import { eq } from 'drizzle-orm';
 
 const redisUrl = getEnvVar('REDIS_URL');

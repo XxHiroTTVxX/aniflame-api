@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Client } from "pg";
-import { getEnvVar } from "../lib/envUtils";
+import { getEnvVar } from "../utils/envUtils";
 
 const client = new Client({
   connectionString: getEnvVar('POSTGRES_URL'),
