@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "bun run src/index.ts",
-    "generate:apikey": "bun run src/lib/key.ts",
+    "generate:apikey": "bun run src/utils/key.ts",
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
     "push": "drizzle-kit push",
@@ -12,7 +12,8 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "drizzle-kit": "^0.22.7"
+    "drizzle-kit": "^0.26.2",
+    "tsx": "^4.19.1"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
@@ -21,16 +22,16 @@
     "@types/cheerio": "^0.22.35",
     "@types/crypto-js": "^4.2.2",
     "@types/jest": "^29.5.12",
-    "@types/pg": "^8.11.2",
+    "@types/pg": "^8.11.10",
     "cheerio": "^1.0.0-rc.12",
     "colors": "^1.4.0",
     "crypto-js": "^4.2.0",
     "discord.js": "^14.15.3",
     "dotenv": "^16.4.5",
-    "drizzle-orm": "^0.31.2",
+    "drizzle-orm": "^0.35.2",
     "ioredis": "^5.3.2",
     "nanoid": "^5.0.7",
-    "pg": "^8.11.3",
+    "pg": "^8.13.0",
     "postgres": "^3.4.4"
   }
 }

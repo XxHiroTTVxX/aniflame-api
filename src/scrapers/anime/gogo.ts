@@ -6,32 +6,37 @@ import { nanoid } from "nanoid";
 import { db } from "../../db";
 import { getEnvVar } from "../../utils/envUtils";
 import cache from "../../utils/cache";
-import { eq } from 'drizzle-orm' 
+import { eq } from 'drizzle-orm';
 import { AES } from "../../utils/AES";
 import { anime } from "../../db/schema";
 import { GogoTypes } from "../../types/enums";
 import type { GogoCard, GogoRecentReleases, GogoInfo } from "../../types/types";
 
-  const redisUrl = getEnvVar('REDIS_URL');
-  class Gogoanime {
-    private Ajax: string;
-    public useDB: boolean = true;
-    public cache: Redis | undefined;
-    constructor(
-      public url: string,
-      useDB: boolean = true,
-      public useCache: Boolean = true
-    ) {
-      this.useCache = useCache;
-      this.useDB = useDB;
-      this.url = url;
-      this.Ajax = "https://ajax.gogocdn.net";
-      if (useCache) {
-        this.cache = new client(redisUrl || "redis://127.0.0.1:6379");
-      }
-    }
-  
+const redisUrl = getEnvVar('REDIS_URL');
+const useRedis = getEnvVar('USE_REDIS', 'true') === 'true';
 
+class Gogoanime {
+  private Ajax: string;
+  public useDB: boolean = true;
+  public cache: Redis | undefined;
+
+  constructor(
+    public url: string,
+    useDB: boolean = true,
+    public useCache: Boolean = true
+  ) {
+    this.useCache = useCache;
+    this.useDB = useDB;
+    this.url = url;
+    this.Ajax = "https://ajax.gogocdn.net";
+    if (useCache && useRedis) {
+      this.cache = new client(redisUrl || "redis://127.0.0.1:6379");
+    }
+  }
+
+  // Other methods...
+
+  
   public async getRecentReleases(
     page: number = 1,
     lang: GogoTypes = GogoTypes.sub

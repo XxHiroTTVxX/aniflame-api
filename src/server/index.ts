@@ -1,21 +1,10 @@
-import { Pool } from "pg";
-import { getEnvVar } from "../utils/envUtils.ts";
 import colors from "colors";
-import Redis from 'ioredis';
+
 import { rateLimitMiddleware } from "../utils/rateLimit.ts";
 import { db  } from "../db";
 import { apiKeys } from "../db/schema";
 
 
-// Connect to Redis using the URL from environment variables
-const redisUrl = getEnvVar('REDIS_URL');
-const redis = new Redis(redisUrl);
-export const cacheTime = getEnvVar('REDIS_CACHE_TIME') || 60 * 60 * 24 * 7 * 2;
-
-// Initialize the database
-const pool = new Pool({
-  connectionString: getEnvVar('POSTGRES_URL'),
-});
 
 async function loadApiKeys() {
   try {

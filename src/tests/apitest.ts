@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const API_KEY = '17182082986742e6115cb3ed317c5d6954ad0cebb';
+const API_KEY = '';
 const URL = 'http://localhost:3000/info/21?apiKey=' + API_KEY;
 
 async function testRateLimit() {
