@@ -327,7 +327,7 @@ class Gogoanime {
       for (const key of Object.keys(sources)) {
         if (Array.isArray(sources[key])) {
           sources[key].forEach((source: { file: string; }) => {
-            source.file = `${M3U8_URL}video/${encodeUrl(source.file)}`;
+            source.file = `${M3U8_URL}/video/${encodeUrl(source.file)}`;
           });
         } else {
           sources[key].file = encodeUrl(`${M3U8_URL}${encodeUrl(sources[key].file)}`);

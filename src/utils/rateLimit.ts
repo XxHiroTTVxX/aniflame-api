@@ -39,8 +39,8 @@ export const rateLimitMiddleware = async (req: Request, apiKey: string, customLi
 
     if (currentCount > customLimit) {
       return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
-          status: 429,
-          headers: { "Content-Type": "application/json" },
+        status: 429,
+        headers: { "Content-Type": "application/json" },
       });
     }
   } catch (error) {
