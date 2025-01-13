@@ -1,5 +1,4 @@
 import colors from "colors";
-
 import { rateLimitMiddleware } from "../utils/rateLimit.ts";
 import { db  } from "../db";
 import { apiKeys } from "../db/schema";

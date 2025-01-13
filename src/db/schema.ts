@@ -12,13 +12,14 @@ export const anime = pgTable(
   "anime",
   {
     id: varchar('id', { length: 24 }).primaryKey(),
+    anilistId: text("anilist_id").$type<number>(),
     title: text("title").notNull(),
     image: text("image").notNull(),
     animeId: varchar('animeId', { length: 10000 }).unique().notNull(),
     type: text("type").notNull(),
     description: text("description").notNull(),
     genres: text("genres").notNull(),
-    released: text("released").notNull(),
+    released: text("released").notNull().$type<number>(),
     status: text("status").notNull(),
     episodes: text("episodes").notNull(),
   },
@@ -28,7 +29,7 @@ export const anime = pgTable(
   })
 );
 
-export const rate_limits = pgTable("rate_limits", {
-  key: text("key").primaryKey(),
-  count: text("count").$type<number>(),
+export const routes = pgTable("routes", {
+  path: text("path").primaryKey(),
+  rateLimit: text("rate_limit").$type<number>(),
 });

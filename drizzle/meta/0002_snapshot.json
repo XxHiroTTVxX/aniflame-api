@@ -1,6 +1,6 @@
 {
-  "id": "d2934c64-bb7c-4a56-a19e-74fd073e96fd",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "3d830bea-45ce-4142-aa77-6c42ea1c8988",
+  "prevId": "308b6a02-8231-4496-9ab0-e32282ca75ba",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -13,6 +13,12 @@
           "type": "varchar(24)",
           "primaryKey": true,
           "notNull": true
+        },
+        "anilist_id": {
+          "name": "anilist_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "title": {
           "name": "title",

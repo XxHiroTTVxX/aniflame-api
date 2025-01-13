@@ -39,7 +39,7 @@ class Gogoanime {
   
   public async getRecentReleases(
     page: number = 1,
-    lang: GogoTypes = GogoTypes.sub
+    lang: GogoTypes = GogoTypes.SUB
   ) {
     const cacheKey = `recent_releases_${page}_${lang}`;
     if (this.useCache && this.cache) {
@@ -61,9 +61,9 @@ class Gogoanime {
         image: image || "",
         link: link || "",
         type:
-          lang === GogoTypes.sub
+          lang === GogoTypes.SUB
             ? "sub"
-            : lang === GogoTypes.dub
+            : lang === GogoTypes.DUB
             ? "dub"
             : "chinese",
       });

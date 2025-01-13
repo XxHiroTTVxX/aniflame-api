@@ -1,0 +1,1 @@
+ALTER TABLE "anime" RENAME COLUMN "released" TO "year";

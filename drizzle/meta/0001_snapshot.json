@@ -1,6 +1,6 @@
 {
-  "id": "d2934c64-bb7c-4a56-a19e-74fd073e96fd",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "308b6a02-8231-4496-9ab0-e32282ca75ba",
+  "prevId": "d2934c64-bb7c-4a56-a19e-74fd073e96fd",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -50,8 +50,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "released": {
-          "name": "released",
+        "year": {
+          "name": "year",
           "type": "text",
           "primaryKey": false,
           "notNull": true

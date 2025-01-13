@@ -4,6 +4,10 @@ import AniList from "../../scrapers/info/anilist";
 import { Redis } from "ioredis";
 import { getEnvVar } from "../../utils/envUtils";
 import type { Body } from "../../types/types";
+import { db } from "../../db";
+import { routes } from "../../db/schema";
+import { sql } from "drizzle-orm";
+
 
 const aniList = new AniList();
 const redisUrl = getEnvVar('REDIS_URL');
@@ -64,4 +68,14 @@ const route = {
     rateLimit: 90,
 };
 
+// Insert the route into the database
+await db.insert(routes).values({
+    path: route.path,
+    rateLimit: route.rateLimit
+  }).onConflictDoUpdate({
+    target: routes.path,
+    set: {
+      rateLimit: route.rateLimit
+    }
+  });
 export default route;

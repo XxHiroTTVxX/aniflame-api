@@ -1,17 +1,14 @@
-import { Format, Genres, Season, SubType, ProviderType, MediaStatus, Type} from "./enums";
-
-
+import { Format, Genres, Season, SubType, ProviderType, MediaStatus, Type } from "./enums";
 
 // Gogo Types
-
 export type GogoRecentReleases = {
     title: string;
     image: string;
     link: string;
     type: "sub" | "dub" | "chinese";
-  };
-  
-  export type GogoInfo = {
+};
+
+export type GogoInfo = {
     title: string;
     image: string;
     animeId: string;
@@ -21,25 +18,22 @@ export type GogoRecentReleases = {
     released: string;
     status: string;
     episodes: GogoEpisode[];
-  };
-  
-  export type GogoCard = {
+};
+
+export type GogoCard = {
     id: string;
     title: string;
     image: string;
     released: string;
-  };
-  
-  export type GogoEpisode = {
+};
+
+export type GogoEpisode = {
     title: string;
     number: number;
     episodeId: string;
     type: "sub" | "dub";
     animeId: string;
-  };
-
-
-
+};
 
 // Type for Titles
 export type Title = {
@@ -223,11 +217,14 @@ export type Manga = {
     characters: Character[];
 };
 
+// Shared keys between AnimeInfo and MangaInfo
 type SharedKeys<T, U> = {
     [K in keyof T]: K extends keyof U ? K : never;
 }[keyof T];
 
+// MediaInfoKeys type
 export type MediaInfoKeys = SharedKeys<AnimeInfo, MangaInfo>;
+
 // Type for AnimeInfo
 export type AnimeInfo = Pick<
     Anime,
@@ -246,7 +243,7 @@ export type MangaInfo = Pick<
     popularity: number | null;
 };
 
-
+// Type for Source
 export type Source = {
     sources: { url: string; quality: string }[];
     subtitles: { url: string; lang: string; label: string }[];
@@ -262,7 +259,7 @@ export type Source = {
     headers: { [key: string]: string };
 };
 
-
+// Type for Server
 export type Server = {
     name: string;
     url: string;

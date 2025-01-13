@@ -7,7 +7,7 @@ import { nanoid } from "nanoid";
 import { db } from "../../../db";
 import { anime } from "../../../db/schema";
 
-const base = "https://anitaku.so";
+const base = "https://anitaku.bz";
 const gogo = new Gogoanime(base, false);
 
 // Initialize Redis 
@@ -18,7 +18,6 @@ const cache = new Redis(redisUrl);
 const insertAnimeToDb = async (animeData: any) => {
   try {
     animeData.id = nanoid();
-
     await db.insert(anime).values({
       id: animeData.id,
       title: animeData.title,

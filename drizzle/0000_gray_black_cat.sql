@@ -20,9 +20,9 @@ CREATE TABLE IF NOT EXISTS "api_keys" (
 	CONSTRAINT "api_keys_key_unique" UNIQUE("key")
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "rate_limits" (
-	"key" text PRIMARY KEY NOT NULL,
-	"count" text
+CREATE TABLE IF NOT EXISTS "routes" (
+	"path" text PRIMARY KEY NOT NULL,
+	"rate_limit" text
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "animeIdx" ON "anime" USING btree ("animeId");--> statement-breakpoint
