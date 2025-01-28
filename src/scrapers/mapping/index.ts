@@ -31,7 +31,17 @@ const SEARCH_QUERY = `
 `;
 
 function normalizeTitle(title: string): string {
-  return title.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+  return title
+    .toLowerCase()
+    // Remove common suffixes and annotations with more variations
+    .replace(/[\s-]*\(?(?:dub|sub|dubbed|subbed|uncensored|uncut|censored|raw)\)?/gi, '')
+    .replace(/\s*[\(\[\{](?:dub|sub|dubbed|subbed|uncensored|uncut|censored|raw)[\)\]\}]/gi, '')
+    .replace(/\s*(season\s*\d+|\d+st|\d+nd|\d+rd|\d+th\s+season)/gi, '')
+    .replace(/\s*(part\s*\d+)/gi, '')
+    .replace(/\s*(480p|720p|1080p|2160p|4k)/gi, '')
+    .replace(/[^\w\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function getAllTitles(animeTitle: any): string[] {
@@ -62,23 +72,24 @@ async function findMatchingAnime() {
 
   for (const animeEntry of gogoData) {
     if (animeEntry.anilistId) {
-      console.log(`Skipping "${animeEntry.title}" - already has AniList ID: ${animeEntry.anilistId}`);
+      console.log('\x1b[33m%s\x1b[0m', `Skipping "${animeEntry.title}" - already has AniList ID: ${animeEntry.anilistId}`);
       continue;
     }
 
     const gogoTitle = animeEntry.title;
+    const normalizedTitle = normalizeTitle(gogoTitle);
     const gogoYear = animeEntry.released;
 
     try {
-      console.log(`\nSearching for: ${gogoTitle}`);
+      console.log('\x1b[34m%s\x1b[0m', `\nSearching for: ${normalizedTitle}`);
       const anilistResponse = await axios.post(ANILIST_API_URL, {
         query: SEARCH_QUERY,
-        variables: { search: gogoTitle },
+        variables: { search: normalizedTitle },
       });
 
       const media = anilistResponse.data?.data?.Media;
       if (!media) {
-        console.log(`No results found for: ${gogoTitle}`);
+        console.log(`No results found for: ${normalizedTitle}`);
         continue;
       }
 
@@ -170,7 +181,7 @@ async function findMatchingAnime() {
       }
 
       if (!foundMatch) {
-        console.log(`No matching anime found for: ${gogoTitle}`);
+        console.log(`No matching anime found for: ${normalizedTitle}`);
       }
 
       // Add a small delay between requests
@@ -178,10 +189,10 @@ async function findMatchingAnime() {
 
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error(`Error searching for "${gogoTitle}": ${error.message}`);
+        console.error(`Error searching for "${normalizedTitle}": ${error.message}`);
         await new Promise(resolve => setTimeout(resolve, 1000));
       } else {
-        console.error(`Unexpected error for "${gogoTitle}":`, error);
+        console.error(`Unexpected error for "${normalizedTitle}":`, error);
       }
     }
   }
