@@ -1,10 +1,10 @@
-import colors from "colors";
 import { db  } from "../db";
 import { apiKeys } from "../db/schema";
 import { sql } from 'drizzle-orm' 
+import { eq } from 'drizzle-orm'
 
 // ensure you import the schema for apiKeys
-function generateUniqueHashedApiKey(): string {
+export function generateUniqueHashedApiKey(): string {
   const timestamp = Date.now().toString();
   const array = new Uint8Array(16);
   const nonce = crypto.getRandomValues(array);
@@ -20,30 +20,26 @@ function generateUniqueHashedApiKey(): string {
   return key;
 }
 
-async function addApiKeyToDrizzle(apiKey: string, name: string, isWhitelisted: boolean) {
-  try {
+
+
+export async function generateAndStoreKey(discordId: string, name: string = 'unknown', isWhitelisted: boolean = false) {
+    // Check if user already has a key
+    const existingKey = await db.select()
+        .from(apiKeys)
+        .where(eq(apiKeys.discordId, discordId))
+        .limit(1);
+
+    if (existingKey.length > 0) {
+        return existingKey[0].key;
+    }
+
+    const newApiKey = generateUniqueHashedApiKey();
+    //@ts-ignore
     await db.insert(apiKeys).values({
-      key: apiKey,
-      name: name,
-      whitelisted: isWhitelisted
-    }).onConflictDoUpdate({
-      target: apiKeys.key,
-      set: {
-        name: name,
-        whitelisted: isWhitelisted
-      }
+        key: newApiKey,
+        name,
+        isWhitelisted,
+        discordId
     });
-    await db.execute(sql`COMMIT`);
-  } catch (error) {
-    await db.execute(sql`ROLLBACK`);
-    console.error(`Error adding API key to Drizzle: ${error}`);
-  }
+    return newApiKey;
 }
-
-const newApiKey = generateUniqueHashedApiKey();
-const apiKeyName = process.argv[2] || 'unknown';
-const isWhitelisted = process.argv[3] === 'true' ? true : false;
-await addApiKeyToDrizzle(newApiKey, apiKeyName, isWhitelisted);
-console.log(colors.green(`New API key generated and stored: ${newApiKey} (Name: ${apiKeyName}) (Whitelisted: ${isWhitelisted})`));
-
-process.exit();

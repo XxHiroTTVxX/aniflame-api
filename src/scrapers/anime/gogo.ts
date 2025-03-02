@@ -1,6 +1,5 @@
 import { load } from "cheerio";
 import Redis from "ioredis";
-import CryptoJS from "crypto-js";
 import { Redis as client } from "ioredis";
 import { nanoid } from "nanoid";
 import { db } from "../../db";
@@ -11,6 +10,7 @@ import { AES } from "../../utils/AES";
 import { anime } from "../../db/schema";
 import { GogoTypes } from "../../types/enums";
 import type { GogoCard, GogoRecentReleases, GogoInfo } from "../../types/types";
+import { spoofMediaSources } from '../../lib/mediaSpoofer/mediaSpoofer.ts';
 
 const redisUrl = getEnvVar('REDIS_URL');
 const useRedis = getEnvVar('USE_REDIS', 'true') === 'true';
@@ -112,13 +112,13 @@ class Gogoanime {
       const result: GogoInfo = {
         title: "",
         image: "",
-        animeId: id, // Assuming id is the animeId
-        type: "sub", // Assuming default type is "sub"
+        animeId: "",
+        type: "sub",
         description: "",
         genres: [],
         released: "",
         status: "",
-        episodes: [],
+        episodes: []
       };
 
       if (this.useDB) {
@@ -197,6 +197,7 @@ class Gogoanime {
           .from(anime)
           .where(eq(anime.animeId, id));
         if (dbresult.length === 0) {
+          //@ts-ignore
           await db.insert(anime).values({
             id: nanoid(),
             title: title,
@@ -321,39 +322,17 @@ class Gogoanime {
         await cache.set(this.cache, cacheKey, sources, 60 * 10);
       }
 
-
-      const M3U8_URL = Bun.env.M3U8_URL || "https://m3u8.aniflame.lol/";
-
-      for (const key of Object.keys(sources)) {
-        if (Array.isArray(sources[key])) {
-          sources[key].forEach((source: { file: string; }) => {
-            source.file = `${M3U8_URL}/video/${encodeUrl(source.file)}`;
-          });
-        } else {
-          sources[key].file = encodeUrl(`${M3U8_URL}${encodeUrl(sources[key].file)}`);
-        }
+      try {
+        const processedSources = spoofMediaSources(sources, {
+          videoPath: '/video',
+          trackPath: ''
+        });
+        
+        return processedSources;
+      } catch (error) {
+        console.error("Error getting episode source:", error);
+        throw error;
       }
-      if (sources.track) {
-        if (Array.isArray(sources.track.tracks)) {
-          sources.track.tracks.forEach((track: { file: string; }) => {
-            track.file = `${M3U8_URL}${track.file}`;
-          });
-        } else {
-          sources.track.file = `${M3U8_URL}${sources.track.file}`;
-        }
-      }
-      
-      
-      function encodeUrl(url: string) {
-        const secretKey = Bun.env.SECRET_KEY;
-        if (!secretKey) {
-          throw new Error("SECRET_KEY is not defined");
-        }
-        return AES.Encrypt(url, secretKey);
-      }
-
-
-  return sources;
 
     } catch (error) {
       console.error("Error getting episode source:", error);

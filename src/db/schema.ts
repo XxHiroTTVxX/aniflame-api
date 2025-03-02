@@ -1,13 +1,12 @@
-
-import { serial, text, pgTable,  uniqueIndex,varchar } from "drizzle-orm/pg-core";
+import { serial, text, pgTable, boolean,  uniqueIndex,varchar } from "drizzle-orm/pg-core";
 
 export const apiKeys = pgTable("api_keys", {
   id: serial("id").primaryKey(),
   key: text("key").unique(),
   name: text("name"),
-  whitelisted: text("whitelisted").$type<boolean>(),
+  whitelisted: boolean("whitelisted").default(false).notNull(),
+  discordId: text("discord_id").unique()
 });
-
 export const anime = pgTable(
   "anime",
   {

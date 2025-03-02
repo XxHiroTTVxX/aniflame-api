@@ -232,6 +232,12 @@ export type AnimeInfo = Pick<
 > & {
     rating: number | null;
     popularity: number | null;
+    episodes?: {
+        id: string;
+        number: number;
+        title: string;
+        url: string;
+    }[];
 };
 
 // Type for MangaInfo
@@ -264,4 +270,18 @@ export type Server = {
     name: string;
     url: string;
     type?: SubType;
+};
+export type MediaSource = {
+    file: string;
+    [key: string]: any;
+};
+
+export type TrackSource = {
+    file?: string;
+    tracks?: MediaSource[];
+    [key: string]: any;
+};
+
+export type MediaSources = {
+    [key: string]: MediaSource | MediaSource[] | TrackSource;
 };

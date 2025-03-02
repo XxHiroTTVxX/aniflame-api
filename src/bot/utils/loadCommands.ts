@@ -6,7 +6,7 @@ import {REST, Routes} from 'discord.js';
 
 
 export async function loadCommands(token: string, applicationId: string, guildId: string) {
-    const commands = new Collection<string, Command>();
+    const commands = new Collection<string, any>();
     const commandsDir = path.resolve('./src/bot/commands');
     const commandFiles = fs.readdirSync(commandsDir).filter((file) => file.endsWith('.ts'));
     await Promise.all(commandFiles.map(async (file) => {

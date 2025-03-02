@@ -6,7 +6,6 @@ import { getEnvVar } from "../../utils/envUtils";
 import type { Body } from "../../types/types";
 import { db } from "../../db";
 import { routes } from "../../db/schema";
-import { sql } from "drizzle-orm";
 
 
 const aniList = new AniList();

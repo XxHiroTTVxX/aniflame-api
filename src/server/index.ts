@@ -48,7 +48,10 @@ export const startServer = async () => {
     };
   } = {};
 
-  const routeFiles = [await import("./routes/info.ts")];
+  const routeFiles = [
+    await import("./routes/info.ts"),
+    await import("./routes/generateKey.ts")
+  ];
 
   for (const file of routeFiles) {
     const routeModule = await file;
@@ -83,35 +86,36 @@ export const startServer = async () => {
           );
         }
 
+        // API Key Validation
         const apiKey = url.searchParams.get("apiKey");
         if (!apiKey) {
-          return new Response(
-            JSON.stringify({ error: "API Key Not Provided" }),
-            {
-              status: 401,
-              headers: { "Content-Type": "application/json" },
-            }
-          );
+          return new Response(JSON.stringify({ error: "API Key Not Provided" }), {
+            status: 401,
+            headers: { "Content-Type": "application/json" },
+          });
         }
+        
+        // Find API Key Details
         const apiKeyDetails = keys.find((key: any) => key.key === apiKey);
         if (!apiKeyDetails) {
-          return new Response(
-            JSON.stringify({ error: "Not valid API key" }),
-            {
-              status: 403,
-              headers: { "Content-Type": "application/json" },
-            }
-          );
+          return new Response(JSON.stringify({ error: "Not valid API key" }), {
+            status: 403,
+            headers: { "Content-Type": "application/json" },
+          });
         }
 
+        // Route Handling with Rate Limiting
         const pathName = `/${url.pathname.split("/").slice(1)[0]}`;
-
         if (routes[pathName]) {
           const { handler, rateLimit } = routes[pathName];
+          console.log(`Processing request for path: ${pathName}, API key: ${apiKey}`);
           if (apiKeyDetails.whitelisted) {
+            console.log(`Whitelisted key detected: ${apiKey}`);
             return handler(req);
           } else {
+            console.log(`Applying rate limit for key: ${apiKey}, limit: ${rateLimit}`);
             const response = await rateLimitMiddleware(req, apiKey, rateLimit);
+            console.log(`Rate limit middleware response: ${response ? 'Rate limited' : 'Allowed'}`);
             if (response) {
               return response;
             } else {

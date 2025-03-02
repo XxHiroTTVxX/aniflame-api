@@ -9,7 +9,8 @@
     "migrate": "drizzle-kit migrate",
     "push": "drizzle-kit push",
     "seed": "bun run src/scrapers/anime/utils/gogo.seed.ts",
-    "map": "bun run src/scrapers/mapping/index.ts"
+    "map": "bun run src/scrapers/mapping/index.ts",
+    "start:bot": "bun run src/bot/index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",

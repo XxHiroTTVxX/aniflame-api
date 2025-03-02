@@ -169,4 +169,5 @@ export const enum StreamingServers {
   DuckStreamV2 = 'duckstreamv2',
   BirdStream = 'birdstream',
   AnimeFlix = 'animeflix',
+  MegaUp = "MegaUp",
 }
