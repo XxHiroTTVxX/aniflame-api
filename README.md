@@ -1,28 +1,16 @@
-# Aniflame API (New Name Needed)
+# Anidex
 
 ## Description
 
-This is the Aniflame API a API made as a alternative to that anify api which has provided some of this code in this repo.
+Anidex is a modern anime API designed to provide comprehensive anime data and metadata. Built as a robust alternative to existing solutions, Anidex offers:
+
+- Detailed anime information including titles, synopses, and genres
+- Efficient scraping capabilities
+- RESTful API endpoints for easy integration
+- Built with TypeScript and Bun for optimal performance
 
 ## Installation
 
-**NOTE:** This project utilizes [Bun](https://bun.sh). Please install it before attempting to run Anify.
-Clone this repository and `cd` into the directory.
+**Prerequisites:** This project requires [Bun](https://bun.sh) runtime. Please install it before proceeding.
 
-```bash
-git clone https://github.com/XxHiroTTVxX/aniflame-api.git
-```
-
-## Docker Installation
-
-### Docker Compose
-
-```yaml
-TODO
-```
-
-### Docker Run
-
-```bash
-comming soon
-```
+1. Clone the repository:

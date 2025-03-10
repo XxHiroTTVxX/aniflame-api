@@ -2,10 +2,10 @@
 import Gogoanime from "../gogo";
 import { load } from "cheerio";
 import Redis from "ioredis";
-import { getEnvVar } from "../../../utils/envUtils";
+import { getEnvVar } from "../../../../utils/envUtils";
 import { nanoid } from "nanoid";
-import { db } from "../../../db";
-import { anime } from "../../../db/schema";
+import { db } from "../../../../db";
+import { anime } from "../../../../db/schema";
 
 const base = "https://anitaku.bz";
 const gogo = new Gogoanime(base, false);

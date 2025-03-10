@@ -1,0 +1,1810 @@
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel</title>
+  <!-- Add Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Add FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Base Dark Theme */
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --bg-dark: #0f172a;
+      --bg-card: #1e293b;
+      --border-color: #334155;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #3b82f6;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 250px;
+      background-color: var(--bg-card);
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      overflow-y: auto;
+      transition: all 0.3s;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+    }
+    
+    .sidebar-header {
+      padding: 20px 15px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .sidebar-brand {
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .nav-menu {
+      list-style: none;
+      padding: 15px 0;
+    }
+    
+    .nav-item {
+      padding: 10px 15px;
+      margin: 5px 10px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    
+    .nav-item:hover, .nav-item.active {
+      background-color: rgba(99, 102, 241, 0.1);
+    }
+    
+    .nav-link {
+      display: flex;
+      align-items: center;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 500;
+      gap: 10px;
+    }
+    
+    .nav-icon {
+      width: 20px;
+      text-align: center;
+    }
+    
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: 250px;
+      padding: 20px;
+      transition: all 0.3s;
+    }
+    
+    .mobile-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    /* Dashboard Stats */
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+    
+    .stat-card {
+      background-color: var(--bg-card);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .stat-title {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+    
+    .stat-icon.requests {
+      background-color: rgba(99, 102, 241, 0.1);
+      color: var(--primary);
+    }
+    
+    .stat-icon.keys {
+      background-color: rgba(245, 158, 11, 0.1);
+      color: var(--warning);
+    }
+    
+    .stat-icon.usage {
+      background-color: rgba(34, 197, 94, 0.1);
+      color: var(--success);
+    }
+    
+    .stat-icon.alerts {
+      background-color: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+    }
+    
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    
+    .stat-description {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+    
+    .trend-positive {
+      color: var(--success);
+    }
+    
+    .trend-negative {
+      color: var(--danger);
+    }
+
+    /* Table Styling */
+    .table-container {
+      background-color: var(--bg-card);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 25px;
+    }
+    
+    .table-header {
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .table-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    
+    .table-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .search-box {
+      display: flex;
+      align-items: center;
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      padding: 5px 10px;
+      margin-right: 10px;
+    }
+    
+    .search-box i {
+      margin-right: 8px;
+      color: var(--text-secondary);
+    }
+    
+    .search-input {
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      outline: none;
+      padding: 5px;
+      width: 200px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      font-weight: 600;
+    }
+
+    tr:hover {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Progress Bar */
+    .progress {
+      height: 8px;
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 8px 0 5px;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    
+    .progress-low {
+      background-color: var(--success);
+    }
+    
+    .progress-medium {
+      background-color: var(--warning);
+    }
+    
+    .progress-high {
+      background-color: var(--danger);
+    }
+
+    /* Buttons */
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button:hover {
+      background-color: var(--primary-hover);
+    }
+    
+    button.btn-sm {
+      padding: 5px 12px;
+      font-size: 0.85rem;
+    }
+    
+    button.btn-outline {
+      background-color: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+    }
+    
+    button.btn-outline:hover {
+      background-color: var(--primary);
+      color: white;
+    }
+    
+    button.btn-danger {
+      background-color: var(--danger);
+    }
+    
+    button.btn-danger:hover {
+      background-color: #dc2626;
+    }
+    
+    button.btn-warning {
+      background-color: var(--warning);
+    }
+    
+    button.btn-warning:hover {
+      background-color: #d97706;
+    }
+
+    /* Modal Styling */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+    
+    .modal-content {
+      background-color: var(--bg-card);
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid var(--border-color);
+      width: 50%;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    
+    .close:hover {
+      color: var(--primary);
+    }
+    
+    .modal-footer {
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Form Styling */
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    
+    label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    
+    input, select, textarea {
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 10px 12px;
+      border-radius: 6px;
+      outline: none;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+    
+    /* Alert & Notification */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .alert-success {
+      background-color: rgba(34, 197, 94, 0.1);
+      border-left: 4px solid var(--success);
+    }
+    
+    .alert-danger {
+      background-color: rgba(239, 68, 68, 0.1);
+      border-left: 4px solid var(--danger);
+    }
+    
+    .alert-warning {
+      background-color: rgba(245, 158, 11, 0.1);
+      border-left: 4px solid var(--warning);
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    
+    .badge-success {
+      background-color: rgba(34, 197, 94, 0.1);
+      color: var(--success);
+    }
+    
+    .badge-warning {
+      background-color: rgba(245, 158, 11, 0.1);
+      color: var(--warning);
+    }
+    
+    .badge-danger {
+      background-color: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+    }
+    
+    .badge-info {
+      background-color: rgba(59, 130, 246, 0.1);
+      color: var(--info);
+    }
+    
+    .ip-tag {
+      background-color: rgba(99, 102, 241, 0.1);
+      color: var(--primary);
+      border-radius: 12px;
+      padding: 2px 10px;
+      font-size: 0.8rem;
+      margin: 2px;
+      display: inline-block;
+    }
+
+    /* Chart Container */
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin-top: 20px;
+      background: var(--bg-card);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .usage-summary {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .usage-card {
+      flex: 1;
+      min-width: 180px;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+    }
+    
+    .usage-card h3 {
+      margin: 0 0 5px 0;
+      font-size: 1.8rem;
+    }
+    
+    .usage-card p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    
+    .ip-usage-list {
+      margin-top: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+      background-color: rgba(255, 255, 255, 0.02);
+      border-radius: 6px;
+    }
+    
+    .ip-usage-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 15px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .ip-usage-item:last-child {
+      border-bottom: none;
+    }
+
+    /* Loading Indicator */
+    .loading {
+      position: relative;
+    }
+    
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Confirmation Dialog */
+    #confirmationDialog {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+    
+    #confirmationDialog.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .confirmation-content {
+      background-color: var(--bg-card);
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 400px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    .confirmation-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+    
+    .confirmation-message {
+      margin-bottom: 20px;
+      color: var(--text-secondary);
+    }
+    
+    .confirmation-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Toast Notification */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 6px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateY(100px);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+      z-index: 1000;
+      min-width: 250px;
+    }
+    
+    #toast.show {
+      transform: translateY(0);
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    #toast.success {
+      background-color: var(--bg-card);
+      border-left: 4px solid var(--success);
+    }
+    
+    #toast.error {
+      background-color: var(--bg-card);
+      border-left: 4px solid var(--danger);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 992px) {
+      .sidebar {
+        width: 70px;
+      }
+      
+      .sidebar-brand span,
+      .nav-link span {
+        display: none;
+      }
+      
+      .main-content {
+        margin-left: 70px;
+      }
+      
+      .nav-item {
+        display: flex;
+        justify-content: center;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .sidebar {
+        left: -70px;
+      }
+      
+      .sidebar.show {
+        left: 0;
+      }
+      
+      .main-content {
+        margin-left: 0;
+      }
+      
+      .mobile-toggle {
+        display: block;
+      }
+      
+      .usage-summary {
+        flex-direction: column;
+      }
+      
+      .usage-card {
+        min-width: auto;
+      }
+      
+      .table-container {
+        overflow-x: auto;
+      }
+    }
+
+    /* Utility Classes */
+    .text-muted {
+      color: var(--text-secondary);
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .mt-20 {
+      margin-top: 20px;
+    }
+
+    .mb-20 {
+      margin-bottom: 20px;
+    }
+
+    #keys-loading {
+      display: none; /* Hidden by default */
+      justify-content: center;
+      align-items: center;
+      height: 200px;
+    }
+
+    #keys-table {
+      display: table; /* Visible by default */
+    }
+
+
+    /* New styles for the IP management modal */
+    .theme-modal {
+      background-color: var(--bg-card);
+    }
+
+    .theme-close {
+      color: var(--primary);
+    }
+
+    .theme-textarea {
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 10px;
+      border-radius: 6px;
+      outline: none;
+      width: 100%;
+      height: 100px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .theme-btn {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      font-weight: 500;
+    }
+
+    .theme-btn:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .theme-heading {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <i class="fas fa-fire"></i>
+        <span>AniFlame API</span>
+      </div>
+    </div>
+    <ul class="nav-menu">
+      <li class="nav-item active">
+        <a href="" class="nav-link">
+          <i class="fas fa-chart-line nav-icon"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="#" class="nav-link" onclick="showTab('keys')">
+          <i class="fas fa-key nav-icon"></i>
+          <span>API Keys</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="#" class="nav-link" onclick="showTab('users')">
+          <i class="fas fa-users nav-icon"></i>
+          <span>Users</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="#" class="nav-link" onclick="showTab('settings')">
+          <i class="fas fa-cog nav-icon"></i>
+          <span>Settings</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/logout" class="nav-link">
+          <i class="fas fa-sign-out-alt nav-icon"></i>
+          <span>Logout</span>
+        </a>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    <div class="mobile-toggle">
+      <i class="fas fa-bars"></i>
+    </div>
+    
+    <!-- Dashboard Tab -->
+    <div class="tab-content" id="dashboard">
+      <h1 class="mb-20">Dashboard</h1>
+      
+      <!-- Stats Cards -->
+      <div class="stats-container">
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">TOTAL REQUESTS</span>
+            <div class="stat-icon requests">
+              <i class="fas fa-server"></i>
+            </div>
+          </div>
+          <div class="stat-value" id="total-requests">0</div>
+          <div class="stat-description">
+            <span class="trend-positive">
+              <i class="fas fa-arrow-up"></i> 12.5%
+            </span>
+            since last month
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">ACTIVE API KEYS</span>
+            <div class="stat-icon keys">
+              <i class="fas fa-key"></i>
+            </div>
+          </div>
+          <div class="stat-value" id="active-keys">0</div>
+          <div class="stat-description">
+            <span class="trend-positive">
+              <i class="fas fa-arrow-up"></i> 5.2%
+            </span>
+            since last month
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">AVG USAGE RATE</span>
+            <div class="stat-icon usage">
+              <i class="fas fa-chart-line"></i>
+            </div>
+          </div>
+          <div class="stat-value" id="avg-usage">0%</div>
+          <div class="stat-description">
+            <span class="trend-negative">
+              <i class="fas fa-arrow-down"></i> 2.8%
+            </span>
+            since last month
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">USAGE ALERTS</span>
+            <div class="stat-icon alerts">
+              <i class="fas fa-exclamation-circle"></i>
+            </div>
+          </div>
+          <div class="stat-value" id="high-usage-keys">0</div>
+          <div class="stat-description">
+            <span class="text-muted">Keys over 80% usage</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Usage Chart -->
+      <div class="chart-container">
+        <canvas id="dashboardChart"></canvas>
+      </div>
+      
+      <!-- IP Usage Section -->
+      <div class="table-container mt-20">
+        <div class="table-header">
+          <h2 class="table-title">Top IP Usage</h2>
+          <div class="table-actions">
+            <button class="btn-outline" id="refresh-ip-usage">
+              <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <button class="btn-outline" id="export-ip-data">
+              <i class="fas fa-download"></i> Export
+            </button>
+          </div>
+        </div>
+        
+        <div id="ip-usage-loading" class="loading">
+          <div class="spinner"></div>
+        </div>
+        
+        <table id="ip-usage-table" style="display: none;">
+          <thead>
+            <tr>
+              <th>IP Address</th>
+              <th>Total Requests</th>
+              <th>Last Request</th>
+              <th>Associated Keys</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="ip-usage-list"></tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- API Keys Tab -->
+    <div class="tab-content" id="keys" style="display: none;">
+      <h1 class="mb-20">API Keys Management</h1>
+      
+      <div class="table-container">
+        <div class="table-header">
+          <h2 class="table-title">API Keys</h2>
+          <div class="table-actions">
+            <div class="search-box">
+              <i class="fas fa-search"></i>
+              <input type="text" class="search-input" id="key-search" placeholder="Search keys...">
+            </div>
+            <button id="create-key-btn" onclick="openCreateKeyModal()">
+              <i class="fas fa-plus"></i> New Key
+            </button>
+            <button class="btn-outline" id="export-api-data">
+              <i class="fas fa-download"></i> Export
+            </button>
+          </div>
+        </div>
+        
+        <div id="keys-loading" class="loading">
+          <div class="spinner"></div>
+        </div>
+        
+        <table id="keys-table" style="display: none;">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="select-all-keys"> Name</th>
+              <th>Key</th>
+              <th>Allowed IPs</th>
+              <th>Usage</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="keys-list"></tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Users Tab -->
+    <div class="tab-content" id="users" style="display: none;">
+      <h1 class="mb-20">User Management</h1>
+      
+      <div class="table-container">
+        <div class="table-header">
+          <h2 class="table-title">System Users</h2>
+          <div class="table-actions">
+            <button id="create-user-btn">
+              <i class="fas fa-plus"></i> New User
+            </button>
+          </div>
+        </div>
+        
+        <table id="users-table">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Role</th>
+              <th>Last Login</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-list">
+            <tr>
+              <td>admin</td>
+              <td><span class="badge badge-info">Administrator</span></td>
+              <td>Today, 10:25 AM</td>
+              <td>
+                <button class="btn-sm">Edit</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+
+  <!-- Create API Key Modal -->
+  <div id="create-key-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Create New API Key</h2>
+      <form id="create-key-form">
+        <div class="form-group">
+          <label for="key-name">Key Name</label>
+          <input type="text" id="key-name" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="key-limit">Monthly Limit</label>
+          <input type="number" id="key-limit" value="1000" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="key-ips">Blacklisted IPs (one per line)</label>
+          <textarea id="key-ips"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="key-endpoints">Allowed Endpoints (one per line)</label>
+          <textarea id="key-endpoints"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="key-whitelisted">
+            <input type="checkbox" id="key-whitelisted" checked> Whitelisted Key
+          </label>
+        </div>
+        
+        <div class="form-group">
+          <label for="key-discord">Discord ID (optional)</label>
+          <input type="text" id="key-discord">
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Create Key</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- IP Management Modal -->
+  <div id="ip-management-modal" class="modal">
+    <div class="modal-content theme-modal">
+      <span class="close theme-close">&times;</span>
+      <h2 class="theme-heading">Manage Blacklisted IPs</h2>
+      <textarea 
+        id="ip-list" 
+        class="theme-textarea"
+        rows="10" 
+        placeholder="Enter one IP per line"
+      ></textarea>
+      <div class="modal-actions">
+        <button id="save-ips-btn" class="btn btn-primary theme-btn">Save</button>
+        <button id="cancel-ips-btn" class="btn btn-secondary theme-btn" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Usage Modal -->
+  <div id="usageModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-title">API Usage</h2>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="usage-summary">
+          <div class="usage-card">
+            <h3 id="current-usage">0</h3>
+            <p>Current Usage</p>
+          </div>
+          <div class="usage-card">
+            <h3 id="monthly-limit">0</h3>
+            <p>Monthly Limit</p>
+          </div>
+          <div class="usage-card">
+            <h3 id="usage-percentage">0%</h3>
+            <p>Usage Percentage</p>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="usageChart"></canvas>
+        </div>
+        <div class="ip-usage-list" id="ip-usage-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Your existing JavaScript code
+    
+    // Function to fetch and display API keys
+    async function fetchKeys() {
+      try {
+        // Show loading spinner and hide table
+        document.getElementById('keys-loading').style.display = 'flex';
+        document.getElementById('keys-table').style.display = 'none';
+        
+        const response = await fetch('/admin/keys');
+        if (!response.ok) throw new Error('Failed to fetch keys');
+        
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error || 'Invalid response');
+        
+        // Render keys table and hide spinner
+        renderKeysTable(data.keys);
+        document.getElementById('keys-table').style.display = 'table';
+      } catch (error) {
+        console.error('Error fetching keys:', error);
+        showToast('Failed to load API keys', 'error');
+      } finally {
+        // Always hide loading spinner
+        document.getElementById('keys-loading').style.display = 'none';
+      }
+    }
+
+    function renderKeysTable(keys) {
+      const tableBody = document.getElementById('keys-list');
+      tableBody.innerHTML = ''; // Clear existing rows
+      
+      if (!keys || keys.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="7">No API keys found</td></tr>';
+        return;
+      }
+
+      // Add rows for each key
+      keys.forEach(key => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${key.id}</td>
+          <td>${key.name || 'N/A'}</td>
+          <td class="api-key-cell">${key.key}</td>
+          <td>${key.monthlyLimit}</td>
+          <td>${key.currentMonthUsage}</td>
+          <td>${key.usagePercentage || 0}%</td>
+          <td>
+            <button class="btn btn-danger delete-btn" data-id="${key.id}">Delete</button>
+            <button class="btn btn-primary manage-ips-btn" data-id="${key.id}">Manage IPs</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+    
+    // Get modal elements
+    const modal = document.getElementById('usageModal');
+    const closeBtn = document.querySelector('.close');
+    
+    // Close modal when clicking the close button
+    closeBtn.onclick = function() {
+      modal.style.display = "none";
+    }
+    
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    }
+    
+    // Function to show usage graph
+    let usageChart; // Global variable to store chart instance
+    
+    async function showUsageGraph(keyId, keyName) {
+      // Set modal title
+      document.getElementById('modal-title').textContent = `API Usage: ${keyName}`;
+      
+      // Show modal
+      modal.style.display = "block";
+      
+      // Fetch usage data
+      try {
+        const response = await fetch(`/admin/api-usage?keyId=${keyId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          const key = data.key;
+          const usageData = data.data;
+          
+          // Update usage summary
+          document.getElementById('current-usage').textContent = key.currentMonthUsage.toLocaleString();
+          document.getElementById('monthly-limit').textContent = key.monthlyLimit.toLocaleString();
+          
+          const percentage = ((key.currentMonthUsage / key.monthlyLimit) * 100).toFixed(1);
+          document.getElementById('usage-percentage').textContent = `${percentage}%`;
+          
+          // Prepare chart data
+          const dates = usageData.map(item => item.date);
+          const usage = usageData.map(item => item.usage);
+          
+          // Destroy previous chart if it exists
+          if (usageChart) {
+            usageChart.destroy();
+          }
+          
+          // Create new chart
+          const ctx = document.getElementById('usageChart').getContext('2d');
+          usageChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: dates,
+              datasets: [{
+                label: 'API Usage',
+                data: usage,
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                backgroundColor: 'rgba(0, 119, 204, 0.1)',
+                borderColor: 'rgba(0, 119, 204, 1)',
+                borderWidth: 2,
+                pointBackgroundColor: 'rgba(0, 119, 204, 1)',
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                tension: 0.3,
+                fill: true
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                tooltip: {
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  borderColor: 'rgba(0, 0, 0, 0.1)',
+                  borderWidth: 1,
+                  bodyFont: {
+                    size: 14,
+                    weight: 'normal'
+                  },
+                  padding: 10,
+                  cornerRadius: 4,
+                  displayColors: false,
+                  bodyColor: '#000',
+                  titleColor: '#000'
+                },
+                legend: {
+                  display: false
+                }
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                  },
+                  title: {
+                    display: true,
+                    text: 'Number of Requests',
+                    font: {
+                      size: 14,
+                      weight: '500'
+                    },
+                    padding: { top: 10, bottom: 10 },
+                    color: '#fff'
+                  },
+                  ticks: {
+                    font: {
+                      size: 12
+                    },
+                    stepSize: 1,
+                    color: '#fff'
+                  }
+                },
+                x: {
+                  grid: {
+                    display: false
+                  },
+                  title: {
+                    display: true,
+                    text: 'Date',
+                    font: {
+                      size: 14,
+                      weight: '500'
+                    },
+                    padding: { top: 10, bottom: 10 },
+                    color: '#fff'
+                  },
+                  ticks: {
+                    font: {
+                      size: 12
+                    },
+                    maxRotation: 0,
+                    autoSkip: true,
+                    autoSkipPadding: 20,
+                    color: '#fff'
+                  }
+                }
+              },
+              elements: {
+                line: {
+                  borderWidth: 3,
+                  borderColor: '#6366f1'
+                },
+                point: {
+                  hoverRadius: 6,
+                  hoverBorderWidth: 2,
+                  backgroundColor: '#6366f1'
+                }
+              },
+              animation: {
+                duration: 800,
+                easing: 'easeInOutQuart'
+              },
+              hover: {
+                mode: 'nearest',
+                intersect: true
+              }
+            }
+          });
+          
+          // Add IP usage breakdown
+          const ipUsage = data.ipUsage || {}; // Assume backend returns ipUsage object
+          const ipList = Object.entries(ipUsage)
+            .sort((a, b) => b[1] - a[1])
+            .map(([ip, count]) => `
+              <div class="ip-usage-item">
+                <span>${ip}</span>
+                <span>${count} requests</span>
+              </div>
+            `).join('');
+          
+          // Add this to your modal content
+          document.getElementById('ip-usage-list').innerHTML = ipList || '<div>No IP data available</div>';
+        } else {
+          console.error('Error fetching usage data:', data.error);
+        }
+      } catch (error) {
+        console.error('Error fetching usage data:', error);
+      }
+    }
+    
+    // Call fetchKeys on load
+    fetchKeys();
+    
+    function closeModal() {
+      const modal = document.getElementById('usageModal');
+      modal.style.display = "none";
+    }
+    
+    // Dashboard initialization
+    async function initDashboard() {
+      fetchKeys();
+      loadDashboardStats();
+      loadIpUsageStats();
+    }
+    
+    // Load dashboard metrics
+    async function loadDashboardStats() {
+      try {
+        const response = await fetch('/admin/dashboard-stats');
+        const data = await response.json();
+        
+        if (data.success) {
+          document.getElementById('total-requests').textContent = data.totalRequests.toLocaleString();
+          document.getElementById('active-keys').textContent = data.activeKeys.toLocaleString();
+          document.getElementById('avg-usage').textContent = `${data.averageUsage}%`;
+          document.getElementById('high-usage-keys').textContent = data.highUsageKeys.toLocaleString();
+          
+          // Initialize dashboard chart
+          const ctx = document.getElementById('dashboardChart').getContext('2d');
+          new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: data.timeLabels,
+              datasets: [{
+                label: 'API Requests',
+                data: data.requestCounts,
+                borderColor: 'rgba(99, 102, 241, 1)',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                tension: 0.3,
+                fill: true
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  display: false
+                },
+                tooltip: {
+                  backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                  titleColor: '#f8fafc',
+                  bodyColor: '#f8fafc',
+                  padding: 12,
+                  cornerRadius: 6
+                }
+              },
+              scales: {
+                x: {
+                  grid: {
+                    display: false
+                  },
+                  ticks: {
+                    color: '#94a3b8'
+                  }
+                },
+                y: {
+                  grid: {
+                    color: 'rgba(255, 255, 255, 0.05)'
+                  },
+                  ticks: {
+                    color: '#94a3b8'
+                  }
+                }
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+      }
+    }
+    
+    // Load IP usage stats
+    async function loadIpUsageStats() {
+      try {
+        document.getElementById('ip-usage-loading').style.display = 'flex';
+        document.getElementById('ip-usage-table').style.display = 'none';
+        
+        const response = await fetch('/admin/ip-usage');
+        const data = await response.json();
+        
+        if (data.success) {
+          const ipList = document.getElementById('ip-usage-list');
+          ipList.innerHTML = '';
+          
+          data.ipStats.forEach(ip => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${ip.address}</td>
+              <td>${ip.totalRequests.toLocaleString()}</td>
+              <td>${new Date(ip.lastRequest).toLocaleString()}</td>
+              <td>${ip.keyCount} keys</td>
+              <td>
+                ${ip.suspicious 
+                  ? '<span class="badge badge-danger">Suspicious</span>' 
+                  : '<span class="badge badge-success">Normal</span>'}
+              </td>
+              <td>
+                <button class="btn-sm" onclick="viewIpDetails('${ip.address}')">
+                  <i class="fas fa-eye"></i> View
+                </button>
+                ${ip.suspicious 
+                  ? `<button class="btn-sm btn-danger" onclick="blockIp('${ip.address}')">
+                      <i class="fas fa-ban"></i> Block
+                     </button>`
+                  : ''}
+              </td>
+            `;
+            ipList.appendChild(row);
+          });
+          
+          document.getElementById('ip-usage-loading').style.display = 'none';
+          document.getElementById('ip-usage-table').style.display = 'table';
+        }
+      } catch (error) {
+        console.error('Error fetching IP stats:', error);
+      }
+    }
+    
+    // View IP details
+    function viewIpDetails(ip) {
+      // Implementation for viewing detailed IP usage
+      console.log(`View details for IP: ${ip}`);
+      // This would open a modal with detailed IP usage information
+    }
+    
+    // Block an IP
+    async function blockIp(ip) {
+      if (confirm(`Are you sure you want to block IP address ${ip}?`)) {
+        try {
+          const response = await fetch('/admin/block-ip', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ ip })
+          });
+          
+          if (response.ok) {
+            showToast('IP address has been blocked', 'success');
+            loadIpUsageStats(); // Reload IP usage data
+          }
+        } catch (error) {
+          console.error('Error blocking IP:', error);
+          showToast('Failed to block IP address', 'error');
+        }
+      }
+    }
+    
+    // Toast notification function
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.id = 'toast';
+      toast.className = type;
+      toast.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+        <span>${message}</span>
+      `;
+      
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add('show');
+      }, 10);
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+          toast.remove();
+        }, 300);
+      }, 3000);
+    }
+    
+    // Initialize tab functionality
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.style.display = 'none';
+      });
+      document.getElementById(tabId).style.display = 'block';
+      
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      
+      document.querySelector(`.nav-item a[onclick="showTab('${tabId}')"]`).parentElement.classList.add('active');
+    }
+    
+    // Toggle sidebar on mobile
+    document.querySelector('.mobile-toggle').addEventListener('click', () => {
+      document.querySelector('.sidebar').classList.toggle('show');
+    });
+    
+    // Add event listener for refresh IP usage button
+    document.getElementById('refresh-ip-usage').addEventListener('click', loadIpUsageStats);
+    
+    // Add event listener for export IP data button
+    document.getElementById('export-ip-data').addEventListener('click', async () => {
+      try {
+        const response = await fetch('/admin/ip-usage/export');
+        const blob = await response.blob();
+        
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ip-usage-export-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        
+        window.URL.revokeObjectURL(url);
+        a.remove();
+      } catch (error) {
+        console.error('Error exporting IP data:', error);
+        showToast('Failed to export IP data', 'error');
+      }
+    });
+
+
+    // Add event listener for export API data button
+    document.getElementById('export-api-data').addEventListener('click', async () => {
+      try {
+        const response = await fetch('/admin/keys/export');
+        const blob = await response.blob();
+        
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `api-usage-export-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        
+        window.URL.revokeObjectURL(url);
+        a.remove();
+      } catch (error) {
+        console.error('Error exporting API data:', error);
+        showToast('Failed to export API data', 'error');
+      }
+    });
+    
+    
+    // Initialize the dashboard on load
+    window.addEventListener('DOMContentLoaded', initDashboard);
+
+    // Function to open create key modal
+    function openCreateKeyModal() {
+      document.getElementById('create-key-modal').style.display = 'block';
+    }
+
+    // Function to close any modal
+    function closeModal() {
+      document.querySelectorAll('.modal').forEach(modal => {
+        modal.style.display = 'none';
+      });
+    }
+
+    // Add event listeners for closing modals
+    document.addEventListener('DOMContentLoaded', () => {
+      // Close modal when clicking close button
+      document.querySelectorAll('.modal .close').forEach(btn => {
+        btn.addEventListener('click', closeModal);
+      });
+
+      // Close modal when clicking outside
+      document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            closeModal();
+          }
+        });
+      });
+
+      // Close modal when pressing Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeModal();
+        }
+      });
+    });
+
+    // Update the create key form submission
+    document.getElementById('create-key-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const keyData = {
+    name: document.getElementById('key-name').value,
+    blacklistedIPs: document.getElementById('key-ips').value.split('\n').map(ip => ip.trim()).filter(ip => ip),
+    monthlyLimit: parseInt(document.getElementById('key-limit').value),
+    whitelisted: document.getElementById('key-whitelisted').checked,
+    discordId: document.getElementById('key-discord').value,
+    allowedEndpoints: document.getElementById('key-endpoints').value.split('\n').map(endpoint => endpoint.trim()).filter(endpoint => endpoint)
+  };
+
+  console.log('Key data being sent:', keyData);
+
+  try {
+    const response = await fetch('/admin/keys', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(keyData)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('Create key response:', data);
+    
+    if (!data.success) throw new Error(data.error || 'Invalid response');
+    
+    closeModal();
+    fetchKeys();
+    showToast('API key created successfully', 'success');
+  } catch (error) {
+    console.error('Error creating key:', error);
+    showToast(`Failed to create API key: ${error.message}`, 'error');
+  }
+});
+
+    // Handle key deletion
+    document.addEventListener('click', async (e) => {
+      if (e.target.classList.contains('delete-btn')) {
+        const keyId = e.target.getAttribute('data-id');
+        if (confirm('Are you sure you want to delete this API key?')) {
+          try {
+            const response = await fetch(`/admin/keys/${keyId}`, {
+              method: 'DELETE'
+            });
+
+            if (response.ok) {
+              fetchKeys();
+              showToast('API key deleted successfully', 'success');
+            } else {
+              throw new Error('Failed to delete key');
+            }
+          } catch (error) {
+            console.error('Error deleting key:', error);
+            showToast('Failed to delete API key', 'error');
+          }
+        }
+      }
+    });
+
+    // Initialize key search
+    const keySearch = document.getElementById('key-search');
+    keySearch.addEventListener('input', () => {
+      const searchTerm = keySearch.value.toLowerCase();
+      const rows = document.querySelectorAll('#keys-list tr');
+      
+      rows.forEach(row => {
+        const keyName = row.querySelector('td').textContent.toLowerCase();
+        row.style.display = keyName.includes(searchTerm) ? '' : 'none';
+      });
+    });
+
+    // Initialize select all checkbox
+    document.getElementById('select-all-keys').addEventListener('change', (e) => {
+      const checkboxes = document.querySelectorAll('#keys-list input[type="checkbox"]');
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = e.target.checked;
+      });
+    });
+
+    // Handle IP management modal
+    document.addEventListener('click', async (e) => {
+      if (e.target.classList.contains('manage-ips-btn')) {
+        const keyId = e.target.getAttribute('data-id');
+        const modal = document.getElementById('ip-management-modal');
+        const ipList = document.getElementById('ip-list');
+        const saveIpsBtn = document.getElementById('save-ips-btn');
+        
+        try {
+          // Show loading state
+          ipList.disabled = true;
+          saveIpsBtn.disabled = true;
+          ipList.placeholder = 'Loading IPs...';
+          
+          // Fetch current blacklisted IPs
+          const response = await fetch(`/admin/keys/${keyId}/ips`, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          });
+          
+          console.log('Fetch IPs response:', response);
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+          }
+          
+          const data = await response.json();
+          console.log('Fetch IPs data:', data);
+          
+          if (!data.success) {
+            throw new Error(data.error || 'Invalid response from server');
+          }
+          
+          // Populate IP list
+          ipList.value = data.blacklistedIPs.join('\n');
+          ipList.placeholder = 'Enter one IP per line';
+          ipList.disabled = false;
+          saveIpsBtn.disabled = false;
+          
+          // Show modal
+          modal.style.display = 'block';
+          
+          // Handle save
+          saveIpsBtn.onclick = async () => {
+            const ips = ipList.value.split('\n').map(ip => ip.trim()).filter(ip => ip);
+            
+            try {
+              const saveResponse = await fetch(`/admin/keys/${keyId}/ips`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ips })
+              });
+              
+              if (!saveResponse.ok) throw new Error('Failed to save IPs');
+              
+              const saveData = await saveResponse.json();
+              if (!saveData.success) throw new Error(saveData.error || 'Invalid response');
+              
+              showToast('IPs updated successfully', 'success');
+              modal.style.display = 'none';
+            } catch (error) {
+              console.error('Error saving IPs:', error);
+              showToast(`Failed to save IPs: ${error.message}`, 'error');
+            }
+          };
+        } catch (error) {
+          console.error('Error managing IPs:', error);
+          showToast(`Failed to manage IPs: ${error.message}`, 'error');
+          ipList.placeholder = 'Error loading IPs';
+          ipList.disabled = false;
+          saveIpsBtn.disabled = false;
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,37 +1,46 @@
-const axios = require('axios');
+import { db } from '../db';
+import { apiUsageLog } from '../db/schema';
+import { eq } from 'drizzle-orm';
+import axios from 'axios';
 
-const API_KEY = '174086911248808f387dd28e0866625c6135f12b5';
-const URL = 'http://localhost:3000/info/21?apiKey=' + API_KEY;
+const API_KEY = '45e6b59ebd4690607479e61a7eef3e37b3737939878c6049897f6d2e3a97392f';
+const BASE_URL = 'http://localhost:3000';
 
-async function testRateLimit() {
-    const requestCount = 100; // Number of requests to send
-    let successCount = 0;
-    let rateLimitExceeded = 0;
-    let requestsInLastMinute = 0;
-    const startTime = Date.now();
+async function testIpTracking() {
+  const testIps = [
+    '1.2.3.4',
+    '192.168.1.1',
+    '10.0.0.1'
+  ];
 
-    const timer = setInterval(() => {
-        const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
-        console.log(`Requests in last 60 seconds: ${requestsInLastMinute}`);
-        requestsInLastMinute = 0; // Reset counter
-    }, 60000);
+  for (const ip of testIps) {
+    console.log(`Testing with IP: ${ip}`);
+    
+    // Make request with IP header and API key in URL
+    await axios.get(`${BASE_URL}/info/21?apiKey=${API_KEY}`, {
+      headers: {
+        'X-Forwarded-For': ip
+      }
+    });
 
-    for (let i = 0; i < requestCount; i++) {
-        try {
-            await axios.get(URL);
-            successCount++;
-            requestsInLastMinute++;
-        } catch (error: any) {
-            console.error(error);
-            if (error.response && error.response.status === 429) {
-                rateLimitExceeded++;
-                requestsInLastMinute++;
-            }
-        }
+    // Verify IP was logged
+    const logs = await db.select()
+      .from(apiUsageLog)
+      .where(eq(apiUsageLog.clientIp, ip))
+      .limit(1);
+
+    if (logs.length > 0) {
+      console.log(`✅ IP ${ip} logged successfully`);
+    } else {
+      console.log(`❌ IP ${ip} not logged`);
     }
-
-    clearInterval(timer);
-    console.log(`Success: ${successCount}, Rate Limit Exceeded: ${rateLimitExceeded}`);
+  }
 }
 
-testRateLimit();
+// Run the test
+testIpTracking()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error('Test failed:', error);
+    process.exit(1);
+  });

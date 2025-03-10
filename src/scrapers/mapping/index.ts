@@ -53,7 +53,7 @@ function getAllTitles(animeTitle: any): string[] {
 }
 
 async function findMatchingAnime() {
-  const gogoData = await db
+  const anizoneData = await db
     .select({
       id: anime.id,
       title: anime.title,
@@ -62,23 +62,23 @@ async function findMatchingAnime() {
     })
     .from(anime);
 
-  if (!gogoData.length) {
+  if (!anizoneData.length) {
     console.error('No anime data found in database');
     return [];
   }
 
-  console.log(`Found ${gogoData.length} anime in database`);
+  console.log(`Found ${anizoneData.length} anime in database`);
   const matches = [];
 
-  for (const animeEntry of gogoData) {
+  for (const animeEntry of anizoneData) {
     if (animeEntry.anilistId) {
       console.log('\x1b[33m%s\x1b[0m', `Skipping "${animeEntry.title}" - already has AniList ID: ${animeEntry.anilistId}`);
       continue;
     }
 
-    const gogoTitle = animeEntry.title;
-    const normalizedTitle = normalizeTitle(gogoTitle);
-    const gogoYear = animeEntry.released;
+    const anizoneTitle = animeEntry.title;
+    const normalizedTitle = normalizeTitle(anizoneTitle);
+    const anizoneYear = animeEntry.released;
 
     try {
       console.log('\x1b[34m%s\x1b[0m', `\nSearching for: ${normalizedTitle}`);
@@ -97,10 +97,10 @@ async function findMatchingAnime() {
       let foundMatch = false;
 
       // 1. Try exact match with year
-      if (gogoYear && !foundMatch) {
+      if (anizoneYear && !foundMatch) {
         const exactYearMatch = candidates.find((candidate: any) => 
-          candidate.startDate.year === gogoYear &&
-          getAllTitles(candidate.title).some(title => title === gogoTitle)
+          candidate.startDate.year === anizoneYear &&
+          getAllTitles(candidate.title).some(title => title === anizoneTitle)
         );
         if (exactYearMatch) {
           console.log(`Match found! AniList ID: ${exactYearMatch.id} (${exactYearMatch.title.romaji})`);
@@ -111,20 +111,20 @@ async function findMatchingAnime() {
           matches.push({ 
             match: exactYearMatch, 
             matchType: 'exact-year', 
-            originalTitle: gogoTitle,
-            year: gogoYear
+            originalTitle: anizoneTitle,
+            year: anizoneYear
           });
           foundMatch = true;
         }
       }
 
       // 2. Try normalized match with year
-      if (gogoYear && !foundMatch) {
-        const normalizedGogoTitle = normalizeTitle(gogoTitle);
+      if (anizoneYear && !foundMatch) {
+        const normalizedAnizoneTitle = normalizeTitle(anizoneTitle);
         const normalizedMatch = candidates.find((candidate: any) =>
-          candidate.startDate.year === gogoYear &&
+          candidate.startDate.year === anizoneYear &&
           getAllTitles(candidate.title).some(title => 
-            normalizeTitle(title) === normalizedGogoTitle
+            normalizeTitle(title) === normalizedAnizoneTitle
           )
         );
         if (normalizedMatch) {
@@ -136,8 +136,8 @@ async function findMatchingAnime() {
           matches.push({ 
             match: normalizedMatch, 
             matchType: 'normalized-year', 
-            originalTitle: gogoTitle,
-            year: gogoYear
+            originalTitle: anizoneTitle,
+            year: anizoneYear
           });
           foundMatch = true;
         }
@@ -145,15 +145,15 @@ async function findMatchingAnime() {
 
       // 3. Try fuzzy match with high similarity
       if (!foundMatch) {
-        const normalizedGogoTitle = normalizeTitle(gogoTitle);
+        const normalizedAnizoneTitle = normalizeTitle(anizoneTitle);
         let bestMatch = null;
         let highestSimilarity = 0;
 
         for (const candidate of candidates) {
           for (const title of getAllTitles(candidate.title)) {
             const normalizedTitle = normalizeTitle(title);
-            const dist = distance(normalizedTitle, normalizedGogoTitle);
-            const maxLength = Math.max(normalizedTitle.length, normalizedGogoTitle.length);
+            const dist = distance(normalizedTitle, normalizedAnizoneTitle);
+            const maxLength = Math.max(normalizedTitle.length, normalizedAnizoneTitle.length);
             const similarity = 1 - dist / maxLength;
 
             if (similarity > highestSimilarity && similarity >= 0.8) {
@@ -162,8 +162,8 @@ async function findMatchingAnime() {
                 match: candidate, 
                 matchType: 'fuzzy', 
                 similarity, 
-                originalTitle: gogoTitle,
-                year: gogoYear
+                originalTitle: anizoneTitle,
+                year: anizoneYear
               };
             }
           }

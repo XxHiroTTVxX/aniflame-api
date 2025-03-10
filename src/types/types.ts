@@ -285,3 +285,22 @@ export type TrackSource = {
 export type MediaSources = {
     [key: string]: MediaSource | MediaSource[] | TrackSource;
 };
+
+export type AnimeData = {
+    // Core identification
+    title: string;
+    detailUrl: string;
+    
+    // Descriptive information
+    synopsis: string;
+    genres: string[];
+    
+    // Metadata
+    episodes: number;
+    type: string;
+    releaseYear: number;
+    status: string;
+    
+    // Media
+    image: string;
+  }

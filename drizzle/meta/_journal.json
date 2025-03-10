@@ -5,57 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1735623420714,
-      "tag": "0000_gray_black_cat",
+      "when": 1741566747978,
+      "tag": "0000_fat_toro",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1735678291027,
-      "tag": "0001_dark_dakota_north",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1735679366254,
-      "tag": "0002_slow_mikhail_rasputin",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1740868302967,
-      "tag": "0003_sparkling_mach_iv",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1740872662104,
-      "tag": "0004_special_unicorn",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1740873017139,
-      "tag": "0005_small_morlocks",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1740873996673,
-      "tag": "0006_known_lila_cheney",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1740874039317,
-      "tag": "0007_odd_magus",
+      "when": 1741573426906,
+      "tag": "0001_busy_joseph",
       "breakpoints": true
     }
   ]
