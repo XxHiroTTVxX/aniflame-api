@@ -1,6 +1,5 @@
 import { db  } from "../db";
 import { apiKeys } from "../db/schema";
-import { sql } from 'drizzle-orm' 
 import { eq } from 'drizzle-orm'
 
 // ensure you import the schema for apiKeys

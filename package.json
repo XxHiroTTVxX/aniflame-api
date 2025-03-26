@@ -9,12 +9,13 @@
     "migrate": "drizzle-kit migrate",
     "push": "drizzle-kit push",
     "seed": "bun run src/scrapers/anime/utils/gogo.seed.ts",
-    "map": "bun run src/scrapers/mapping/index.ts",
+    "map": "bun run scripts/map.ts",
     "start:bot": "bun run src/bot/index.ts",
     "start:admin": "bun run src/admin/index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "@types/node": "^22.13.13",
     "drizzle-kit": "^0.26.2",
     "tsx": "^4.19.1"
   },
@@ -28,7 +29,7 @@
     "@types/jest": "^29.5.12",
     "@types/pg": "^8.11.10",
     "axios": "^1.7.9",
-    "cheerio": "^1.0.0-rc.12",
+    "cheerio": "^1.0.0",
     "colors": "^1.4.0",
     "crypto": "^1.0.1",
     "crypto-js": "^4.2.0",
@@ -36,9 +37,11 @@
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.35.2",
     "fastest-levenshtein": "^1.0.16",
+    "image-pixels": "^2.2.2",
     "ioredis": "^5.3.2",
     "nanoid": "^5.0.7",
     "pg": "^8.13.0",
-    "postgres": "^3.4.4"
+    "postgres": "^3.4.4",
+    "util": "^0.12.5"
   }
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "anime" ADD COLUMN "stream_urls" json DEFAULT '{}'::json NOT NULL;

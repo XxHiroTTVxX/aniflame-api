@@ -1,0 +1,44 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Never Use Mock Data
+
+This rule enforces that mock data should not be used in the codebase. All data should come from real sources like:
+- APIs
+- Databases
+- User input
+- Environment variables
+
+## What to Avoid
+- Hardcoded test data
+- Mock API responses in production code
+- Dummy data for development
+- Static JSON files with fake data
+
+## Exceptions
+- Unit tests can use mock data for testing purposes
+- Storybook stories may use mock data for component visualization
+- Development seeds for database initialization
+
+## Best Practices
+1. Use proper data fetching from backend services
+2. Implement proper error handling for data fetching
+3. Use loading states while waiting for real data
+4. Create proper interfaces/types for your data structures
+
+## Examples
+
+❌ Bad:
+```typescript
+const mockUsers = [
+  { id: 1, name: "John Doe" },
+  { id: 2, name: "Jane Smith" }
+];
+```
+
+✅ Good:
+```typescript
+const users = await fetchUsersFromAPI();
+```

@@ -1,48 +1,15 @@
-import { Format, Genres, Season, SubType, ProviderType, MediaStatus, Type } from "./enums";
+import { Format, Genres, Season, SubType, ProviderType, MediaStatus, Type } from "./enums.ts";
 
-// Gogo Types
-export type GogoRecentReleases = {
-    title: string;
-    image: string;
-    link: string;
-    type: "sub" | "dub" | "chinese";
-};
+// =========================================
+// Common / Shared Types
+// =========================================
 
-export type GogoInfo = {
-    title: string;
-    image: string;
-    animeId: string;
-    type: "sub" | "dub";
-    description: string;
-    genres: string[];
-    released: string;
-    status: string;
-    episodes: GogoEpisode[];
-};
-
-export type GogoCard = {
-    id: string;
-    title: string;
-    image: string;
-    released: string;
-};
-
-export type GogoEpisode = {
-    title: string;
-    number: number;
-    episodeId: string;
-    type: "sub" | "dub";
-    animeId: string;
-};
-
-// Type for Titles
 export type Title = {
     english: string | null;
     romaji: string | null;
     native: string | null;
 };
 
-// Type for Character
 export type Character = {
     name: string;
     image: string | null;
@@ -52,40 +19,28 @@ export type Character = {
     };
 };
 
-// Type for Relation
-export type Relation = {
+export type Relations = {
+    id: string;
+    type: Type;
     title: Title;
+    format: Format;
+    relationType: string;
 };
 
-// Type for MediaInfo
-export type MediaInfo = {
-    id: number;
-    title: Title;
-    coverImage: string | null;
-    bannerImage: string | null;
-    genres: string[];
-    description: string | null;
-    characters: Character[];
-    relations: Relation[];
+export type Artwork = {
+    type: "banner" | "poster" | "clear_logo" | "top_banner" | "icon" | "clear_art";
+    img: string;
+    providerId: string;
 };
 
-// Type for Body
 export type Body = {
     fields?: string[];
 };
 
-// Type for Result
-export type Result = {
-    id: string;
-    title: string;
-    altTitles: string[];
-    year: number;
-    format: Format;
-    img: string | null;
-    providerId: string;
-};
+// =========================================
+// Anime-specific Types
+// =========================================
 
-// Type for Episode
 export type Episode = {
     id: string;
     title: string;
@@ -99,23 +54,11 @@ export type Episode = {
     updatedAt?: number;
 };
 
-// Type for ChapterData
-export type ChapterData = {
+export type EpisodeData = {
     providerId: string;
-    chapters: Chapter[];
+    episodes: Episode[];
 };
 
-// Type for Chapter
-export type Chapter = {
-    id: string;
-    title: string;
-    number: number;
-    rating: number | null;
-    updatedAt?: number;
-    mixdrop?: string;
-};
-
-// Type for Anime
 export type Anime = {
     id: string;
     slug: string;
@@ -155,29 +98,97 @@ export type Anime = {
     characters: Character[];
 };
 
-// Type for Relations
-export type Relations = {
+export type AnimeInfo = Pick<
+    Anime,
+    "id" | "title" | "artwork" | "synonyms" | "totalEpisodes" | "currentEpisode" | "bannerImage" | "coverImage" | "color" | "season" | "year" | "status" | "genres" | "description" | "format" | "duration" | "trailer" | "countryOfOrigin" | "tags" | "relations" | "characters" | "type"
+> & {
+    rating: number | null;
+    popularity: number | null;
+    episodes?: {
+        id: string;
+        number: number;
+        title: string;
+        url: string;
+    }[];
+};
+
+// =========================================
+// Manga-specific Types
+// =========================================
+
+export enum MangaStatus {
+  ONGOING = "Ongoing",
+  COMPLETED = "Completed",
+  HIATUS = "Hiatus",
+  CANCELLED = "Cancelled",
+  NOT_YET_PUBLISHED = "Not yet published",
+  UNKNOWN = "Unknown"
+}
+
+export enum MangaFormat {
+  MANGA = "MANGA",
+  MANHWA = "MANHWA",
+  MANHUA = "MANHUA",
+  NOVEL = "NOVEL",
+  ONE_SHOT = "ONE_SHOT",
+  UNKNOWN = "UNKNOWN"
+}
+
+export interface IMangaChapter {
+  id: string;
+  number: number;
+  title?: string;
+  volume?: string;
+  pages?: number;
+  language?: string;
+  hash?: string;
+  dataSaver?: boolean;
+  uploader?: string;
+  externalUrl?: string;
+  publishAt?: string;
+  readableAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface IMangaInfo {
+  id: string;
+  title: string;
+  altTitles?: Record<string, string>[];
+  description?: string;
+  authors?: string[];
+  artists?: string[];
+  genres?: string[];
+  themes?: string[];
+  status?: MangaStatus;
+  format?: MangaFormat;
+  version?: number;
+  language?: string;
+  originalLanguage?: string;
+  lastVolume?: string;
+  lastChapter?: string;
+  publicationDemographic?: string;
+  chapters?: IMangaChapter[];
+  relations?: any[];
+  recommendations?: any[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type Chapter = {
     id: string;
-    type: Type;
-    title: Title;
-    format: Format;
-    relationType: string;
+    title: string;
+    number: number;
+    rating: number | null;
+    updatedAt?: number;
+    mixdrop?: string;
 };
 
-// Type for Artwork
-export type Artwork = {
-    type: "banner" | "poster" | "clear_logo" | "top_banner" | "icon" | "clear_art";
-    img: string;
+export type ChapterData = {
     providerId: string;
+    chapters: Chapter[];
 };
 
-// Type for EpisodeData
-export type EpisodeData = {
-    providerId: string;
-    episodes: Episode[];
-};
-
-// Type for Manga
 export type Manga = {
     id: string;
     slug: string;
@@ -217,30 +228,6 @@ export type Manga = {
     characters: Character[];
 };
 
-// Shared keys between AnimeInfo and MangaInfo
-type SharedKeys<T, U> = {
-    [K in keyof T]: K extends keyof U ? K : never;
-}[keyof T];
-
-// MediaInfoKeys type
-export type MediaInfoKeys = SharedKeys<AnimeInfo, MangaInfo>;
-
-// Type for AnimeInfo
-export type AnimeInfo = Pick<
-    Anime,
-    "id" | "title" | "artwork" | "synonyms" | "totalEpisodes" | "currentEpisode" | "bannerImage" | "coverImage" | "color" | "season" | "year" | "status" | "genres" | "description" | "format" | "duration" | "trailer" | "countryOfOrigin" | "tags" | "relations" | "characters" | "type"
-> & {
-    rating: number | null;
-    popularity: number | null;
-    episodes?: {
-        id: string;
-        number: number;
-        title: string;
-        url: string;
-    }[];
-};
-
-// Type for MangaInfo
 export type MangaInfo = Pick<
     Manga,
     "id" | "title" | "artwork" | "synonyms" | "totalChapters" | "bannerImage" | "coverImage" | "color" | "year" | "status" | "genres" | "description" | "format" | "totalVolumes" | "countryOfOrigin" | "tags" | "relations" | "characters" | "type" | "author" | "publisher"
@@ -249,7 +236,10 @@ export type MangaInfo = Pick<
     popularity: number | null;
 };
 
-// Type for Source
+// =========================================
+// Media Source Types
+// =========================================
+
 export type Source = {
     sources: { url: string; quality: string }[];
     subtitles: { url: string; lang: string; label: string }[];
@@ -265,12 +255,12 @@ export type Source = {
     headers: { [key: string]: string };
 };
 
-// Type for Server
 export type Server = {
     name: string;
     url: string;
     type?: SubType;
 };
+
 export type MediaSource = {
     file: string;
     [key: string]: any;
@@ -286,21 +276,70 @@ export type MediaSources = {
     [key: string]: MediaSource | MediaSource[] | TrackSource;
 };
 
+// =========================================
+// Data Types
+// =========================================
+
 export type AnimeData = {
-    // Core identification
     title: string;
     detailUrl: string;
-    
-    // Descriptive information
     synopsis: string;
     genres: string[];
-    
-    // Metadata
     episodes: number;
     type: string;
     releaseYear: number;
     status: string;
-    
-    // Media
     image: string;
-  }
+};
+
+export interface MediaInfo {
+  id: number | string;
+  title: {
+    english: string | null;
+    romaji: string | null;
+    native: string | null;
+  };
+  coverImage: string | null;
+  bannerImage: string | null;
+  genres: string[];
+  description: string | null;
+  characters: {
+    name: string;
+    image: string | null;
+  }[];
+  relations: {
+    title: {
+      english?: string | null;
+      romaji?: string | null;
+      native?: string | null;
+      userPreferred?: string | null;
+    };
+  }[];
+  // Additional fields for AniZip data
+  mappings?: {
+    mal_id?: number;
+    anidb_id?: number;
+    thetvdb_id?: number;
+    imdb_id?: string;
+  };
+  episodeCount?: number;
+  specialCount?: number;
+  episodes?: {
+    number: number | null;
+    title: string | null;
+    airDate?: string;
+    summary?: string;
+    image?: string;
+    rating?: number | null;
+    type: 'episode' | 'special';
+  }[];
+  specials?: {
+    number: number | null;
+    title: string | null;
+    airDate?: string;
+    summary?: string;
+    image?: string;
+    rating?: number | null;
+    type: 'episode' | 'special';
+  }[];
+}

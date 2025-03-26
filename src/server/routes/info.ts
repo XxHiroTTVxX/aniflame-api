@@ -1,14 +1,15 @@
 // Import the createResponse function
 import { createResponse } from "../../lib/response";
 import AniList from "../../scrapers/info/anilist";
+import AniZip from "../../scrapers/info/anizip";
 import { Redis } from "ioredis";
 import { getEnvVar } from "../../utils/envUtils";
 import type { Body } from "../../types/types";
 import { db } from "../../db";
 import { routes } from "../../db/schema";
 
-
 const aniList = new AniList();
+const aniZip = new AniZip();
 const redisUrl = getEnvVar('REDIS_URL');
 const redis = new Redis(redisUrl);
 
@@ -41,25 +42,42 @@ export const handler = async (req: Request): Promise<Response> => {
         fields = fieldsArray.filter(Boolean);
     }
 
-    const cached = await redis.get(`info:${id}:${JSON.stringify(fields)}`);
+    const cacheKey = `info:${id}:${JSON.stringify(fields)}`;
+    const cached = await redis.get(cacheKey);
     if (cached) {
         return createResponse(cached);
     }
 
-      const data = await aniList.getInfo("anime", parseInt(id)); // Use aniList instance to call 'getInfo' method
-      if (!data) {
-          return createResponse(JSON.stringify({ error: "No data found." }), 400);
-      }
-      await redis.set(`info:${id}:${JSON.stringify(fields)}`, JSON.stringify(data));
+    // Fetch data from both AniList and AniZip in parallel
+    const [aniListData, aniZipData] = await Promise.all([
+        aniList.getInfo("anime", parseInt(id)),
+        aniZip.getInfo("anime", parseInt(id))
+    ]);
 
-      return createResponse(JSON.stringify(data));
+    if (!aniListData) {
+        return createResponse(JSON.stringify({ error: "No data found." }), 400);
+    }
+
+    // Merge AniList and AniZip data
+    const mergedData = {
+        ...aniListData,
+        // Add AniZip specific data if available
+        ...(aniZipData && {
+            mappings: aniZipData.mappings,
+            episodeCount: aniZipData.episodeCount,
+            specialCount: aniZipData.specialCount,
+            episodes: aniZipData.episodes,
+        })
+    };
+
+    // Cache the merged data
+    await redis.set(cacheKey, JSON.stringify(mergedData));
+    return createResponse(JSON.stringify(mergedData));
   } catch (e) {
       console.error(e);
       return createResponse(JSON.stringify({ error: "An error occurred." }), 500);
   }
 };
-
-
 
 const route = {
     path: "/info",

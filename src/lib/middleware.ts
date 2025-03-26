@@ -33,42 +33,21 @@ export async function trackApiKeyUsage(apiKey: string, req: Request, endpoint?: 
     
     const keyData = key[0];
     
-    // Start transaction to ensure all updates happen
-    await db.transaction(async (tx) => {
-      // Check if we need to reset the counter (new month)
-      if (keyData.lastResetDate && new Date(keyData.lastResetDate) < firstDayOfMonth) {
-        // Reset for new month
-        await tx.update(apiKeys)
-          .set({ 
-            currentMonthUsage: 1, // Start at 1 for this request
-            lastResetDate: now
-          })
-          .where(eq(apiKeys.id, keyData.id));
-      } else {
-        // Increment usage
-        await tx.update(apiKeys)
-          .set({ 
-            currentMonthUsage: keyData.currentMonthUsage + 1
-          })
-          .where(eq(apiKeys.id, keyData.id));
-      }
-      
-      // Log the detailed usage entry
-      await tx.insert(apiUsageLog)
-        .values({
-          keyId: keyData.id,
-          clientIp,
-          timestamp: now,
-        });
-      
-      // Update hourly usage stats (upsert - insert or update if exists)
-      await tx.execute(sql`
-        INSERT INTO hourly_api_usage (key_id, date, hour, count)
-        VALUES (${keyData.id}, ${today}, ${currentHour}, 1)
-        ON CONFLICT (key_id, date, hour) 
-        DO UPDATE SET count = hourly_api_usage.count + 1
-      `);
-    });
+    // Insert usage record directly without a transaction
+    await db.insert(apiUsageLog)
+      .values({
+        keyId: keyData.id,
+        clientIp,
+        timestamp: now,
+      });
+    
+    // Update hourly usage stats (upsert - insert or update if exists)
+    await db.execute(sql`
+      INSERT INTO hourly_api_usage (key_id, date, hour, count)
+      VALUES (${keyData.id}, ${today}, ${currentHour}, 1)
+      ON CONFLICT (key_id, date, hour) 
+      DO UPDATE SET count = hourly_api_usage.count + 1
+    `);
 
     // Atomic update
     const updateResult = await db.execute(sql`
@@ -95,5 +74,6 @@ export async function trackApiKeyUsage(apiKey: string, req: Request, endpoint?: 
     console.log(`Updated usage for key: ${apiKey}`); // Debug logging
   } catch (error) {
     console.error("Error tracking API usage:", error);
+    // Continue even if tracking fails
   }
 }

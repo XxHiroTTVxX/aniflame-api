@@ -1,4 +1,4 @@
-import { serial, text, pgTable, boolean,  uniqueIndex,varchar, timestamp, integer, date, primaryKey } from "drizzle-orm/pg-core";
+import { serial, text, pgTable, boolean,  uniqueIndex,varchar, timestamp, integer, date, primaryKey, json } from "drizzle-orm/pg-core";
 
 export const apiKeys = pgTable("api_keys", {
   id: serial("id").primaryKey(),
@@ -49,6 +49,8 @@ export const anime = pgTable("anime", {
   status: text("status").notNull(),
   episodes: integer("episodes").default(0).notNull(),
   episodeUrls: text('episode_urls').array(),
+  streamUrls: json('stream_urls').default({}).notNull(),
+  provider: text("provider"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });

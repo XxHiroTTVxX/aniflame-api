@@ -1,0 +1,130 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+l---
+description: 
+globs: 
+alwaysApply: true
+---
+# Always Use Bun
+
+This project uses Bun as the JavaScript runtime and toolkit.
+
+## Key Documentation References
+@https://bun.sh/docs
+@https://bun.sh/guides/read-file
+@https://bun.sh/guides/write-file
+@https://bun.sh/blog/bun-macros
+@https://bun.sh/docs/bundler
+@https://bun.sh/docs/bundler/html
+
+## Core Features
+
+### Runtime
+- Fast JavaScript/TypeScript runtime (drop-in Node.js replacement)
+- Written in Zig and powered by JavaScriptCore for improved performance
+- Native TypeScript and JSX support without configuration
+- Significantly faster startup times and lower memory usage
+
+### Package Management
+- Node.js-compatible package manager
+- Fast installation with `bun install <pkg>`
+- Automatically generates lockfiles
+- Compatible with existing Node.js projects
+
+### Bundler
+- Fast JavaScript/TypeScript bundler with `bun build`
+- Support for bundling multiple entrypoints
+- CSS bundling with `@import` support and asset handling
+- Macros for bundle-time code execution
+- HTML bundling
+
+### Testing
+- Built-in test runner with `bun test`
+- Jest-compatible API
+- Fast execution
+
+### File System
+- High-performance file system APIs
+- Simple read/write APIs:
+  - `Bun.file(path).text()` - Read as string
+  - `Bun.file(path).json()` - Read as JSON
+  - `Bun.write(path, content)` - Write files
+- File watching capabilities
+
+### HTTP & WebSockets
+- Native HTTP server implementation
+- WebSocket server support
+- Fast request handling
+
+### Development Workflow
+- Script running with `bun run`
+- Package execution with `bunx`
+- Project templates
+
+## Common Commands
+```bash
+# Run a script directly
+bun run index.tsx
+
+# Run a script defined in package.json
+bun run start
+
+# Install dependencies
+bun install
+
+# Add a specific package
+bun add react
+
+# Bundle a project
+bun build ./index.tsx --outdir ./out
+
+# Run tests
+bun test
+
+# Execute a package
+bunx cowsay 'Hello, world!'
+```
+
+## Examples
+
+### Embed Git Commit Hash (Bun Macros)
+```typescript
+// getGitCommitHash.ts
+export function getGitCommitHash() {
+  const {stdout} = Bun.spawnSync({
+    cmd: ["git", "rev-parse", "HEAD"],
+    stdout: "pipe",
+  });
+  return stdout.toString();
+}
+
+// in-the-browser.ts
+import { getGitCommitHash } from './getGitCommitHash.ts' with { type: 'macro' };
+console.log(`The current Git commit hash is ${getGitCommitHash()}`);
+```
+
+### Simple React App Bundling
+```typescript
+// Build a React app
+await Bun.build({
+  entrypoints: ['./index.tsx'],
+  outdir: './out',
+})
+
+// Or via CLI
+// bun build ./index.tsx --outdir ./out
+```
+
+### File Operations
+```typescript
+// Read a file
+const text = await Bun.file("path/to/file.txt").text();
+const json = await Bun.file("path/to/file.json").json();
+
+// Write a file
+await Bun.write("path/to/file.txt", "Hello, world!");
+```
+```

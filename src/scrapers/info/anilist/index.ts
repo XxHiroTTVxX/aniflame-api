@@ -1,12 +1,9 @@
+import { InfoScraper } from "..";
+import type { MediaInfo } from "../../../types/types";
 
-import type { MediaInfo } from "../../types/types";
-
-class AniList {
-    [x: string]: any;
-    private readonly api: string;
-
+class AniList extends InfoScraper {
     constructor() {
-        this.api = "https://graphql.anilist.co";
+        super("https://graphql.anilist.co");
     }
 
     async getInfo(mediaType: string, mediaId: number): Promise<MediaInfo | null> {
@@ -203,7 +200,7 @@ class AniList {
                 body: JSON.stringify({ query, variables }),
             });
     
-            const responseData = await response.json() as { data: { Media: MediaInfo } };
+            const responseData = await response.json() as { data: { Media: any } };
             const data = responseData.data;
             if (!data) {
                 throw new Error("No data received from AniList API");
@@ -214,12 +211,8 @@ class AniList {
             return null;
         }
     }
-    
-    
-    
-    
 
-    private formatData(data: any): MediaInfo {
+    protected formatData(data: any): MediaInfo {
         return {
             id: data.id,
             title: {

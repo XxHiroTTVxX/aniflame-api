@@ -1,173 +1,197 @@
+// =========================================
+// Core Media Types
+// =========================================
 
-// Gogo Types Enum
-// Represents the different types of content available on Gogoanime
-export enum GogoTypes {
-  SUB = 'sub', // Subtitled content
-  DUB = 'dub', // Dubbed content
-  CHINESE = 'chinese', // Chinese content
-}
-
-// Media Types Enum
-// Represents the different types of media
 export const enum Type {
-  ANIME = 'ANIME', // Anime media type
-  MANGA = 'MANGA', // Manga media type
+    ANIME = 'ANIME',
+    MANGA = 'MANGA',
 }
 
-// Provider Types Enum
-// Represents the different types of providers
 export const enum ProviderType {
-  ANIME = 'ANIME', // Anime provider type
-  MANGA = 'MANGA', // Manga provider type
-  META = 'META', // Meta provider type
-  INFORMATION = 'INFORMATION', // Information provider type
-  BASE = 'BASE', // Base provider type
+    ANIME = 'ANIME',
+    INFO = 'INFO',
 }
 
-// Sub Types Enum
-// Represents the different types of subtitles
 export const enum SubType {
-  DUB = 'dub', // Dubbed subtitles
-  SUB = 'sub', // Subtitled subtitles
+    DUB = 'dub',
+    SUB = 'sub',
 }
 
-// Media Status Enum
-// Represents the different statuses of media
+// =========================================
+// Media Status & Format
+// =========================================
+
 export const enum MediaStatus {
-  FINISHED = 'FINISHED', // Media has finished airing
-  RELEASING = 'RELEASING', // Media is currently airing
-  NOT_YET_RELEASED = 'NOT_YET_RELEASED', // Media has not yet been released
-  CANCELLED = 'CANCELLED', // Media has been cancelled
-  HIATUS = 'HIATUS', // Media is on hiatus
+    FINISHED = 'FINISHED',
+    RELEASING = 'RELEASING',
+    NOT_YET_RELEASED = 'NOT_YET_RELEASED',
+    CANCELLED = 'CANCELLED',
+    HIATUS = 'HIATUS',
 }
 
-// Format Enum
-// Represents the different formats of media
 export const enum Format {
-  TV = 'TV', // Television format
-  TV_SHORT = 'TV_SHORT', // Short television format
-  MOVIE = 'MOVIE', // Movie format
-  SPECIAL = 'SPECIAL', // Special format
-  OVA = 'OVA', // Original video animation format
-  ONA = 'ONA', // Original net animation format
-  MUSIC = 'MUSIC', // Music format
-  MANGA = 'MANGA', // Manga format
-  NOVEL = 'NOVEL', // Novel format
-  ONE_SHOT = 'ONE_SHOT', // One-shot format
-  UNKNOWN = 'UNKNOWN', // Unknown format
+    // Video Formats
+    TV = 'TV',
+    TV_SHORT = 'TV_SHORT',
+    MOVIE = 'MOVIE',
+    SPECIAL = 'SPECIAL',
+    OVA = 'OVA',
+    ONA = 'ONA',
+    
+    // Other Media Formats
+    MUSIC = 'MUSIC',
+    MANGA = 'MANGA',
+    NOVEL = 'NOVEL',
+    ONE_SHOT = 'ONE_SHOT',
+    
+    // Default
+    UNKNOWN = 'UNKNOWN',
 }
 
-// Formats Array
-// An array of all possible formats
+// Format helper array for iteration/validation
 export const Formats = [
-  Format.TV,
-  Format.TV_SHORT,
-  Format.MOVIE,
-  Format.SPECIAL,
-  Format.OVA,
-  Format.ONA,
-  Format.MUSIC,
-  Format.MANGA,
-  Format.NOVEL,
-  Format.ONE_SHOT,
-  Format.UNKNOWN,
+    Format.TV,
+    Format.TV_SHORT,
+    Format.MOVIE,
+    Format.SPECIAL,
+    Format.OVA,
+    Format.ONA,
+    Format.MUSIC,
+    Format.MANGA,
+    Format.NOVEL,
+    Format.ONE_SHOT,
+    Format.UNKNOWN,
 ];
 
-// Season Enum
-// Represents the different seasons
+// =========================================
+// Seasonal & Categorization
+// =========================================
+
 export const enum Season {
-  WINTER = 'WINTER', // Winter season
-  SPRING = 'SPRING', // Spring season
-  SUMMER = 'SUMMER', // Summer season
-  FALL = 'FALL', // Fall season
-  UNKNOWN = 'UNKNOWN', // Unknown season
+    WINTER = 'WINTER',
+    SPRING = 'SPRING',
+    SUMMER = 'SUMMER',
+    FALL = 'FALL',
+    UNKNOWN = 'UNKNOWN',
 }
 
-// Genres Enum
-// Represents the different genres of media
 export const enum Genres {
-  ACTION = 'Action',
-  ADVENTURE = 'Adventure',
-  ANIME_INFLUENCED = 'Anime Influenced',
-  AVANT_GARDE = 'Avant Garde',
-  AWARD_WINNING = 'Award Winning',
-  BOYS_LOVE = 'Boys Love',
-  CARS = 'Cards',
-  COMEDY = 'Comedy',
-  DEMENTIA = 'Dementia',
-  DEMONS = 'Demons',
-  DOUJINSHI = 'Doujinshi',
-  DRAMA = 'Drama',
-  ECCHI = 'Ecchi',
-  EROTICA = 'Erotica',
-  FAMILY = 'Family',
-  FANTASY = 'Fantasy',
-  FOOD = 'Food',
-  FRIENDSHIP = 'Friendship',
-  GAME = 'Game',
-  GENDER_BENDER = 'Gender Bender',
-  GIRLS_LOVE = 'Girls Love',
-  GORE = 'Gore',
-  GOURMET = 'Gourmet',
-  HAREM = 'Harem',
-  HENTAI = 'Hentai',
-  HISTORICAL = 'Historical',
-  HORROR = 'Horror',
-  ISEKAI = 'Isekai',
-  KIDS = 'Kids',
-  MAGIC = 'Magic',
-  MAHOU_SHOUJO = 'Mahou Shoujo',
-  MARTIAL_ARTS = 'Martial Arts',
-  MECHA = 'Mecha',
-  MEDICAL = 'Medical',
-  MILITARY = 'Military',
-  MUSIC = 'Music',
-  MYSTERY = 'Mystery',
-  PARODY = 'Parody',
-  POLICE = 'Police',
-  POLITICAL = 'Political',
-  PSYCHOLOGICAL = 'Psychological',
-  RACING = 'Racing',
-  ROMANCE = 'Romance',
-  SAMURAI = 'Samurai',
-  SCHOOL = 'School',
-  SCI_FI = 'Sci-Fi',
-  SHOUJO_AI = 'Shoujo Ai',
-  SHOUNEN_AI = 'Shounen Ai',
-  SLICE_OF_LIFE = 'Slice of Life',
-  SPACE = 'Space',
-  SPORTS = 'Sports',
-  SUPER_POWER = 'Super Power',
-  SUPERNATURAL = 'Supernatural',
-  SUSPENCE = 'Suspence',
-  THRILLER = 'Thriller',
-  VAMPIRE = 'Vampire',
-  WORKPLACE = 'Workplace',
-  YAOI = 'Yaoi',
-  YURI = 'Yuri',
-  ZOMBIES = 'Zombies',
+    // Action & Adventure
+    ACTION = 'Action',
+    ADVENTURE = 'Adventure',
+    MARTIAL_ARTS = 'Martial Arts',
+    MILITARY = 'Military',
+    SAMURAI = 'Samurai',
+    SUPER_POWER = 'Super Power',
+
+    // Drama & Slice of Life
+    DRAMA = 'Drama',
+    SLICE_OF_LIFE = 'Slice of Life',
+    WORKPLACE = 'Workplace',
+    SCHOOL = 'School',
+    FAMILY = 'Family',
+    FRIENDSHIP = 'Friendship',
+
+    // Comedy & Parody
+    COMEDY = 'Comedy',
+    PARODY = 'Parody',
+    GOURMET = 'Gourmet',
+    FOOD = 'Food',
+
+    // Romance & Relationships
+    ROMANCE = 'Romance',
+    HAREM = 'Harem',
+    BOYS_LOVE = 'Boys Love',
+    GIRLS_LOVE = 'Girls Love',
+    GENDER_BENDER = 'Gender Bender',
+    SHOUJO_AI = 'Shoujo Ai',
+    SHOUNEN_AI = 'Shounen Ai',
+    YAOI = 'Yaoi',
+    YURI = 'Yuri',
+
+    // Fantasy & Supernatural
+    FANTASY = 'Fantasy',
+    SUPERNATURAL = 'Supernatural',
+    MAGIC = 'Magic',
+    MAHOU_SHOUJO = 'Mahou Shoujo',
+    DEMONS = 'Demons',
+    VAMPIRE = 'Vampire',
+    ZOMBIES = 'Zombies',
+    ISEKAI = 'Isekai',
+
+    // Sci-Fi & Mecha
+    SCI_FI = 'Sci-Fi',
+    MECHA = 'Mecha',
+    SPACE = 'Space',
+
+    // Mystery & Psychological
+    MYSTERY = 'Mystery',
+    PSYCHOLOGICAL = 'Psychological',
+    THRILLER = 'Thriller',
+    SUSPENCE = 'Suspence',
+    HORROR = 'Horror',
+    GORE = 'Gore',
+    DEMENTIA = 'Dementia',
+
+    // Sports & Games
+    SPORTS = 'Sports',
+    CARS = 'Cards',
+    RACING = 'Racing',
+    GAME = 'Game',
+
+    // Adult Content
+    ECCHI = 'Ecchi',
+    EROTICA = 'Erotica',
+    HENTAI = 'Hentai',
+
+    // Other Categories
+    HISTORICAL = 'Historical',
+    KIDS = 'Kids',
+    MEDICAL = 'Medical',
+    MUSIC = 'Music',
+    POLICE = 'Police',
+    POLITICAL = 'Political',
+    ANIME_INFLUENCED = 'Anime Influenced',
+    AVANT_GARDE = 'Avant Garde',
+    AWARD_WINNING = 'Award Winning',
+    DOUJINSHI = 'Doujinshi',
 }
 
-// Streaming Servers Enum
-// Represents the different streaming servers
+// =========================================
+// Streaming Infrastructure
+// =========================================
+
 export const enum StreamingServers {
-  AsianLoad = 'asianload',
-  GogoCDN = 'gogocdn',
-  StreamSB = 'streamsb',
-  MixDrop = 'mixdrop',
-  UpCloud = 'upcloud',
-  VidCloud = 'vidcloud',
-  StreamTape = 'streamtape',
-  VizCloud = 'vidplay',
-  MyCloud = 'mycloud',
-  Filemoon = 'filemoon',
-  VidStreaming = 'vidstreaming',
-  AllAnime = 'allanime',
-  FPlayer = 'fplayer',
-  Kwik = 'kwik',
-  DuckStream = 'duckstream',
-  DuckStreamV2 = 'duckstreamv2',
-  BirdStream = 'birdstream',
-  AnimeFlix = 'animeflix',
-  MegaUp = "MegaUp",
+    // Primary CDNs
+    GogoCDN = 'gogocdn',
+    VizCloud = 'vidplay',
+    VidCloud = 'vidcloud',
+    VidStreaming = 'vidstreaming',
+    
+    // Cloud Storage Based
+    UpCloud = 'upcloud',
+    MyCloud = 'mycloud',
+    
+    // Specialized Anime Servers
+    AsianLoad = 'asianload',
+    AllAnime = 'allanime',
+    AnimeFlix = 'animeflix',
+    
+    // General Purpose Servers
+    StreamSB = 'streamsb',
+    MixDrop = 'mixdrop',
+    StreamTape = 'streamtape',
+    Filemoon = 'filemoon',
+    FPlayer = 'fplayer',
+    
+    // Duck/Bird Streaming Family
+    DuckStream = 'duckstream',
+    DuckStreamV2 = 'duckstreamv2',
+    BirdStream = 'birdstream',
+    
+    // File Hosting
+    MegaUp = "MegaUp",
+    
+    // Specialized Players
+    Kwik = 'kwik',
 }

@@ -15,6 +15,20 @@
       "when": 1741573426906,
       "tag": "0001_busy_joseph",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1741667418477,
+      "tag": "0002_stormy_lucky_pierre",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1742161411486,
+      "tag": "0003_puzzling_leopardon",
+      "breakpoints": true
     }
   ]
 }
