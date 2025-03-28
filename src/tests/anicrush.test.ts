@@ -82,7 +82,7 @@ describe("AnicrushScraper", () => {
     }, TIMEOUT);
 
     test("should get HLS sources or fallback for valid ID", async () => {
-      const sources = await scraper.getSources(validId, "1", "sub", "4", false);
+      const sources = await scraper.getSources(validId, "1", "sub", "4.", false);
       
       expect(sources.status).toBe(true);
       expect(sources.result).toBeDefined();

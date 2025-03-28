@@ -13,12 +13,11 @@ This rule enforces that mock data should not be used in the codebase. All data s
 
 ## What to Avoid
 - Hardcoded test data
-- Mock API responses in production code
+- Mock API responses in ALL code
 - Dummy data for development
 - Static JSON files with fake data
 
 ## Exceptions
-- Unit tests can use mock data for testing purposes
 - Storybook stories may use mock data for component visualization
 - Development seeds for database initialization
 
