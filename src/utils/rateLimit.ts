@@ -1,19 +1,9 @@
-import Redis from 'ioredis';
 import colors from "colors";
-import { getEnvVar } from './envUtils';
-
-const redisUrl = getEnvVar('REDIS_URL');
-const useRedis = getEnvVar('USE_REDIS', 'true') === 'true';
-const redis = useRedis ? new Redis(redisUrl) : undefined;
-
-if (redis) {
-  redis.on('connect', () => console.log(colors.green('Successfully Connected to DragonflyDB')));
-  redis.on('error', (err) => console.error(colors.red('DragonflyDB Client Error'), err));
-}
+import { redis, isRedisEnabled } from './redis';
 
 export const rateLimitMiddleware = async (req: Request, apiKey: string, customLimit: number): Promise<Response | undefined> => {
-  if (!redis) {
-    console.log('Redis/DragonflyDB not initialized, skipping rate limiting');
+  if (!redis || !isRedisEnabled()) {
+    console.log('Redis not available, skipping rate limiting');
     return;
   }
 
@@ -25,13 +15,21 @@ export const rateLimitMiddleware = async (req: Request, apiKey: string, customLi
     const key = `rateLimit:${apiKey}:${windowStart}`;
     console.log(`Using rate limit key: ${key}`);
 
-    // Increment first
-    const currentCount = await redis.incr(key);
+    // Increment first with timeout
+    const currentCount = await Promise.race([
+      redis.incr(key),
+      new Promise<number>((_, reject) => 
+        setTimeout(() => reject(new Error('Redis timeout')), 3000)
+      )
+    ]);
+    
     console.log(`Current request count: ${currentCount}`);
 
     // Set expiration if this is the first request in the window
     if (currentCount === 1) {
-      await redis.expire(key, 60);
+      await redis.expire(key, 60).catch(err => 
+        console.warn(`Failed to set expiration for key ${key}:`, err)
+      );
       console.log(`Set expiration for key: ${key}`);
     }
 
@@ -45,5 +43,7 @@ export const rateLimitMiddleware = async (req: Request, apiKey: string, customLi
     }
   } catch (error) {
     console.error(`Error in rate limit middleware: ${error}`);
+    // Don't block the request if Redis is having issues
+    console.log('Allowing request due to Redis error');
   }
 }

@@ -82,22 +82,30 @@ interface Mappings {
 }
 
 interface AniZipResponse {
-  titles: Titles;
-  episodes: { [key: string]: Episode };
-  episodeCount: number;
-  specialCount: number;
-  images: Image[];
-  mappings: Mappings;
+  titles?: Titles;
+  episodes?: { [key: string]: Episode };
+  episodeCount?: number;
+  specialCount?: number;
+  images?: Image[];
+  mappings?: Mappings;
 }
 
 interface FormattedEpisode {
-  number: number | null;
+  episode: number | null;
   title: string | null;
   airDate?: string;
   summary?: string;
   image?: string;
   rating?: number;
   type: 'episode' | 'special';
+}
+
+interface FormattedSpecial extends FormattedEpisode {
+  specialNumber: number | null;
+  specialType: 'special' | 'ova' | 'parody' | 'other';
+  length: number | null;
+  anidbEid: number | null;
+  episodeKey: string;
 }
 
 class AniZip extends InfoScraper {
@@ -115,74 +123,133 @@ class AniZip extends InfoScraper {
       return null;
     }
   }
+//@ts-ignore
+  protected formatData(data: AniZipResponse): MediaInfo | null {
+    // Return null if no valid data
+    if (!data.titles && !data.mappings) {
+      return null;
+    }
 
-  protected formatData(data: AniZipResponse): MediaInfo {
-    // Get the first episode for the description/summary
-    const firstEpisode = data.episodes["1"];
+    // Get the first episode for the description/summary - add null check
+    const firstEpisode = data.episodes && data.episodes["1"] ? data.episodes["1"] : null;
     
-    // Get the best quality cover image
-    const coverImage = data.images.find(img => img.coverType === "Poster")?.url || 
-                      data.images.find(img => img.coverType === "Banner")?.url ||
-                      null;
+    // Get the best quality cover image - add null check for data.images
+    const coverImage = data.images ? 
+      (data.images.find(img => img.coverType === "Poster")?.url || 
+       data.images.find(img => img.coverType === "Banner")?.url ||
+       null) : null;
 
-    // Get the best quality banner image
-    const bannerImage = data.images.find(img => img.coverType === "Fanart")?.url || null;
+    // Get the best quality banner image - add null check for data.images
+    const bannerImage = data.images ? 
+      data.images.find(img => img.coverType === "Fanart")?.url || null : null;
 
     // Process episodes and specials
     const episodes: FormattedEpisode[] = [];
-    const specials: FormattedEpisode[] = [];
+    const specials: FormattedSpecial[] = [];
 
-    // Handle object format
-    const sortedEpisodeKeys = Object.keys(data.episodes).sort((a, b) => {
-      if (!isNaN(Number(a)) && !isNaN(Number(b))) {
-        return Number(a) - Number(b);
-      }
-      if (!isNaN(Number(a))) return -1;
-      if (!isNaN(Number(b))) return 1;
-      return a.localeCompare(b);
-    });
+    // Handle object format - add null check for data.episodes
+    if (data.episodes) {
+      const sortedEpisodeKeys = Object.keys(data.episodes).sort((a, b) => {
+        if (!isNaN(Number(a)) && !isNaN(Number(b))) {
+          return Number(a) - Number(b);
+        }
+        if (!isNaN(Number(a))) return -1;
+        if (!isNaN(Number(b))) return 1;
+        return a.localeCompare(b);
+      });
 
-    sortedEpisodeKeys.forEach(key => {
-      const ep = data.episodes[key];
-      if (!ep) return;
+      sortedEpisodeKeys.forEach(key => {
+        const ep = data.episodes![key];  // Add ! to assert episodes exists
+        if (!ep) return;
 
-      const episode: FormattedEpisode = {
-        number: ep.episodeNumber || null,
-        title: ep.title.en || ep.title.ja || null,
-        airDate: ep.airDate?.toString(),
-        summary: ep.summary,
-        image: ep.image,
-        rating: ep.rating ? parseFloat(ep.rating) : undefined,
-        type: 'episode'
-      };
+        // Always get episode number from the "episode" field
+        const episodeNumber = ep.episode ? parseInt(ep.episode) : null;
 
-      const isSpecial = key.startsWith('S') || 
-                       key.startsWith('O') || 
-                       !ep.episodeNumber ||
-                       (ep.title.en?.toLowerCase().includes('special') ||
-                        ep.title.ja?.toLowerCase().includes('special'));
+        const episode: FormattedEpisode = {
+          episode: episodeNumber,
+          title: ep.title.en || ep.title.ja || null,
+          airDate: ep.airDate?.toString() || ep.airdate || undefined,
+          summary: ep.summary || ep.overview || undefined,
+          image: ep.image || undefined,
+          rating: ep.rating ? parseFloat(ep.rating) : undefined,
+          type: 'episode'
+        };
 
-      if (isSpecial) {
-        episode.type = 'special';
-        specials.push(episode);
-      } else {
-        episodes.push(episode);
-      }
-    });
+        // Only mark as special if the key starts with S, O, or P (specials, OVAs, parodies)
+        // AND the episode field is not a pure number
+        const isSpecial = (key.startsWith('S') || 
+                          key.startsWith('O') || 
+                          key.startsWith('P')) ||
+                         // Also check if episode field is not a pure number
+                         (ep.episode && !/^\d+$/.test(ep.episode));
 
-    // Sort episodes by number
-    episodes.sort((a, b) => {
-      if (a.number === null) return 1;
-      if (b.number === null) return -1;
-      return a.number - b.number;
+        if (isSpecial) {
+          episode.type = 'special';
+          
+          // Only include fields that have actual data
+          const specialData: any = {
+            episode: ep.episode || null, // Use the actual episode identifier like "S2", "O1", etc.
+            title: ep.title.en || ep.title.ja || null,
+            type: 'special'
+          };
+
+          // Only add fields if they have data
+          if (ep.airDate || ep.airdate) {
+            specialData.airDate = ep.airDate?.toString() || ep.airdate;
+          }
+          
+          if (ep.summary) {
+            specialData.summary = ep.summary;
+          }
+          
+          if (ep.image) {
+            specialData.image = ep.image;
+          }
+          
+          if (ep.rating) {
+            specialData.rating = parseFloat(ep.rating);
+          }
+          
+          if (ep.length) {
+            specialData.length = ep.length;
+          }
+
+          // Removed anidbEid field
+
+          specials.push(specialData);
+        } else {
+          episodes.push(episode);
+        }
+      });
+
+      // Sort episodes by episode number
+      episodes.sort((a, b) => {
+        if (a.episode === null) return 1;
+        if (b.episode === null) return -1;
+        return a.episode - b.episode;
+      });
+    }
+
+    specials.sort((a, b) => {
+      const aEp = a.episode?.toString() || '';
+      const bEp = b.episode?.toString() || '';
+      return aEp.localeCompare(bEp, undefined, { numeric: true });
     });
 
     return {
-      id: data.mappings.anilist_id || 0,
+      id: data.mappings?.anilist_id || 0,
       title: {
-        english: data.titles.en || null,
-        romaji: data.titles["x-jat"] || null,
-        native: data.titles.ja || null,
+        english: data.titles?.en || null,
+        //@ts-ignore
+        french: data.titles?.fr || null,
+        japanese: data.titles?.ja || null,
+        russian: data.titles?.ru || null,
+        spanish: data.titles?.es || null,
+        german: data.titles?.de || null,
+        korean: data.titles?.ko || null,
+        chinese: data.titles?.["zh-Hans"] || null,
+        portuguese: data.titles?.["pt-BR"] || data.titles?.pt || null,
+        italian: data.titles?.it || null,
       },
       coverImage,
       bannerImage,
@@ -191,12 +258,12 @@ class AniZip extends InfoScraper {
       characters: [], // AniZip doesn't provide character information
       relations: [], // AniZip doesn't provide relations directly
       // Additional AniZip specific data
-      mappings: {
+      mappings: data.mappings ? {
         mal_id: data.mappings.mal_id,
         anidb_id: data.mappings.anidb_id,
         thetvdb_id: data.mappings.thetvdb_id,
         imdb_id: data.mappings.imdb_id,
-      },
+      } : undefined,
       episodeCount: data.episodeCount,
       specialCount: data.specialCount,
       episodes,

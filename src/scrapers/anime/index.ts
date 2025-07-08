@@ -31,6 +31,7 @@ export interface SearchResult {
   rating?: number;
   releaseDate?: string;
   totalEpisodes?: number;
+  genres?: string[];
 }
 
 export abstract class AnimeScraper {

@@ -1,5 +1,5 @@
 import { VideoExtractor } from '../video-extractor';
-import { getSources } from './rabbit';
+import { getSources } from './newExtractor';
 
 interface Track {
   file: string;

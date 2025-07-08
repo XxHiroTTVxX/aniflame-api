@@ -3,7 +3,7 @@
     // ... other compiler options ..
     "types": ["node"],
     "lib": ["esnext"],
-    "target": "ES2024", // Or your desired target
+    "target": "ES2022", // Or your desired target
     "module": "ESNext",    
     // Bundler mode
     "moduleResolution": "bundler",

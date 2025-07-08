@@ -325,7 +325,7 @@ export interface MediaInfo {
   episodeCount?: number;
   specialCount?: number;
   episodes?: {
-    number: number | null;
+    episode: number | null;
     title: string | null;
     airDate?: string;
     summary?: string;
@@ -334,12 +334,17 @@ export interface MediaInfo {
     type: 'episode' | 'special';
   }[];
   specials?: {
-    number: number | null;
+    episode: number | null;
     title: string | null;
     airDate?: string;
     summary?: string;
     image?: string;
     rating?: number | null;
     type: 'episode' | 'special';
+    specialNumber?: number | null;
+    specialType?: 'special' | 'ova' | 'parody' | 'other';
+    length?: number | null;
+    anidbEid?: number | null;
+    episodeKey?: string;
   }[];
 }

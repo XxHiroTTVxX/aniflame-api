@@ -1,19 +1,5 @@
 import axios from 'axios';
-import { Redis } from 'ioredis';
-import { getEnvVar } from '../../../utils/envUtils';
 import { megaCloudExtractor } from '../../../lib/extractors';
-
-
-// Set up Redis for caching if available
-let redis: Redis | null = null;
-try {
-  const redisUrl = getEnvVar('REDIS_URL', undefined);
-  if (redisUrl) {
-    redis = new Redis(redisUrl);
-  }
-} catch (error: any) {
-  console.warn('Redis not configured, caching disabled for AnicrushScraper');
-}
 
 const CACHE_TTL = 60 * 60 * 24; // 24 hours
 
@@ -79,21 +65,47 @@ export class AnicrushScraper {
   }
 
   /**
-   * Debug log
+   * Debug log with better formatting
    */
   private log(...args: any[]) {
     if (this.isDebug) {
-      console.log('[AnicrushScraper]', ...args);
+      const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+      console.log(`[${timestamp}] [AnicrushScraper]`, ...args);
     }
   }
 
   /**
-   * Error log
+   * Error log with better formatting
    */
   private error(...args: any[]) {
-    console.error('[AnicrushScraper]', ...args);
+    const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+    console.error(`[${timestamp}] [AnicrushScraper] ERROR:`, ...args);
   }
 
+  /**
+   * Success log for HLS stream extraction
+   */
+  private logHlsSuccess(hlsUrl: string) {
+    if (this.isDebug) {
+      const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+      console.log(`[${timestamp}] [AnicrushScraper] ✅ HLS STREAM FOUND:`);
+      console.log(`[${timestamp}] [AnicrushScraper] 📺 Stream URL: ${hlsUrl}`);
+      console.log(`[${timestamp}] [AnicrushScraper] 🎯 Ready to play!`);
+    }
+  }
+
+  /**
+   * Step-by-step progress log
+   */
+  private logStep(step: string, details?: any) {
+    if (this.isDebug) {
+      const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+      console.log(`[${timestamp}] [AnicrushScraper] 🔄 ${step}`);
+      if (details) {
+        console.log(`[${timestamp}] [AnicrushScraper] 📋 Details:`, details);
+      }
+    }
+  }
 
   /**
    * Search for anime
@@ -204,9 +216,11 @@ export class AnicrushScraper {
    */
   async getSources(id: string, episode: string, subOrDub = 'sub', server?: string, skipHlsProcessing = false): Promise<any> {
     try {
-      this.log(`Getting sources for anime ID: ${id}, episode: ${episode}, subOrDub: ${subOrDub}, server: ${server}`);
+      this.logStep(`Starting source extraction for anime ID: ${id}, episode: ${episode}`);
+      this.logStep(`Parameters: subOrDub=${subOrDub}, server=${server || 'default'}, skipHls=${skipHlsProcessing}`);
       
       // Get the available servers first
+      this.logStep('Step 1: Fetching available servers');
       const serversResponse = await this.getServers(id, episode);
       
       if (!serversResponse.status || !serversResponse.result) {
@@ -220,9 +234,10 @@ export class AnicrushScraper {
       // For the sc parameter, we need to use 'sub' or 'dub', not 0 or 1
       const scParam = subOrDub.toLowerCase() === 'sub' ? 'sub' : 'dub';
       
-      this.log(`Using server: ${serverToUse}, type: ${scParam}`);
+      this.logStep(`Step 2: Using server ${serverToUse} with type ${scParam}`);
       
       // Make the request to get the embed link
+      this.logStep('Step 3: Requesting embed link from API');
       const sourcesResponse = await axios.get(`${this.baseUrl}/episode/sources`, {
         params: {
           _movieId: id,
@@ -232,8 +247,6 @@ export class AnicrushScraper {
         },
         headers: this.getCommonHeaders()
       });
-      
-      this.log('Sources API response:', JSON.stringify(sourcesResponse.data, null, 2));
       
       if (!sourcesResponse.data || !sourcesResponse.data.status) {
         throw new Error('Failed to get sources');
@@ -247,25 +260,25 @@ export class AnicrushScraper {
       const embedLink = sourcesResponse.data.result?.link;
       
       if (!embedLink) {
-        this.log('Response result structure:', JSON.stringify(sourcesResponse.data.result, null, 2));
+        this.logStep('Embed link not found in primary location, checking alternatives');
         
         // Try to extract link from a different location in the response
         if (sourcesResponse.data.result?.sources?.link) {
-          this.log('Found link in sources object');
+          this.logStep('Found link in sources object');
           return sourcesResponse.data.result.sources.link;
         } else if (typeof sourcesResponse.data.result === 'string') {
-          this.log('Result is a string, using as link');
+          this.logStep('Result is a string, using as link');
           return sourcesResponse.data.result;
         }
         
         throw new Error('Embed link not found');
       }
       
-      this.log(`Found embed link: ${embedLink}`);
+      this.logStep(`Step 4: Found embed link: ${embedLink}`);
       
       // Option to skip HLS processing for testing
       if (skipHlsProcessing) {
-        this.log('Skipping HLS processing and returning embed link directly');
+        this.logStep('Skipping HLS processing - returning embed link directly');
         return {
           status: true,
           result: {
@@ -276,12 +289,12 @@ export class AnicrushScraper {
       }
       
       // Get the HLS stream URL from the embed link
+      this.logStep('Step 5: Extracting HLS stream from embed link');
       try {
         const hlsResponse = await this.getHlsLink(embedLink);
-        this.log(`HLS response:`, JSON.stringify(hlsResponse, null, 2));
         
         if (!hlsResponse.status) {
-          this.log('Failed to get HLS link, returning embed link as fallback');
+          this.logStep('HLS extraction failed, using embed link as fallback');
           return {
             status: true,
             result: {
@@ -291,10 +304,16 @@ export class AnicrushScraper {
           };
         }
         
+        // Log success with the HLS URL
+        const hlsUrl = hlsResponse.result?.sources?.[0]?.file;
+        if (hlsUrl) {
+          this.logHlsSuccess(hlsUrl);
+        }
+        
         return hlsResponse;
       } catch (hlsError: any) {
         this.error('Error getting HLS link:', hlsError.message);
-        this.log('Returning embed link as fallback');
+        this.logStep('HLS extraction error, using embed link as fallback');
         return {
           status: true,
           result: {
@@ -318,12 +337,17 @@ export class AnicrushScraper {
         throw new Error('Embed URL is required');
       }
 
+      this.logStep(`Extracting HLS from embed URL: ${embedUrl}`);
+
       // Use megacloud extractor to get the sources
+      this.logStep('Using MegaCloud extractor to get HLS stream');
       const embedSources = await megaCloudExtractor.extract(embedUrl);
 
       if (!embedSources) {
         throw new Error('No sources found');
       }
+
+      this.logStep(`Successfully extracted HLS stream: ${embedSources.substring(0, 100)}...`);
 
       // Return the complete response
       return {

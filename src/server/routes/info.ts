@@ -2,16 +2,93 @@
 import { createResponse } from "../../lib/response";
 import AniList from "../../scrapers/info/anilist";
 import AniZip from "../../scrapers/info/anizip";
-import { Redis } from "ioredis";
-import { getEnvVar } from "../../utils/envUtils";
+import { redis, isRedisEnabled } from "../../utils/redis";
 import type { Body } from "../../types/types";
-import { db } from "../../db";
-import { routes } from "../../db/schema";
 
 const aniList = new AniList();
 const aniZip = new AniZip();
-const redisUrl = getEnvVar('REDIS_URL');
-const redis = new Redis(redisUrl);
+
+// Merge function to combine AniList and AniZip data without duplicates
+function mergeAnimeData(aniListData: any, aniZipData: any) {
+  if (!aniListData) return aniZipData;
+  if (!aniZipData) return aniListData;
+
+  return {
+    // Use AniList as base, override with AniZip where appropriate
+    id: aniListData.id,
+    
+    // Merge titles - prefer AniZip for additional languages, keep AniList for standard ones
+    title: {
+      english: aniListData.title?.english || aniZipData.title?.english,
+      romaji: aniListData.title?.romaji || aniZipData.title?.romaji,
+      native: aniListData.title?.native || aniZipData.title?.native,
+      // Add AniZip's additional language titles
+      ...(aniZipData.title && {
+        french: aniZipData.title.french,
+        russian: aniZipData.title.russian,
+        spanish: aniZipData.title.spanish,
+        german: aniZipData.title.german,
+        korean: aniZipData.title.korean,
+        chinese: aniZipData.title.chinese,
+        portuguese: aniZipData.title.portuguese,
+        italian: aniZipData.title.italian,
+      })
+    },
+
+    // Prefer AniList images, fallback to AniZip
+    coverImage: aniListData.coverImage || aniZipData.coverImage,
+    bannerImage: aniListData.bannerImage || aniZipData.bannerImage,
+    
+    // Merge genres - combine both sources, remove duplicates
+    genres: [...new Set([
+      ...(aniListData.genres || []),
+      ...(aniZipData.genres || [])
+    ])],
+    
+    // Prefer AniList description, fallback to AniZip
+    description: aniListData.description || aniZipData.description,
+    
+    // Prefer AniList characters, AniZip doesn't provide character data
+    characters: aniListData.characters || [],
+    
+    // Prefer AniList relations, AniZip doesn't provide relation data
+    relations: aniListData.relations || [],
+    
+    // Use AniZip mappings (more comprehensive)
+    mappings: aniZipData.mappings || aniListData.mappings,
+    
+    // Use AniList episode count (more accurate for long series), AniZip for detailed episode data
+    episodeCount: aniListData.episodes || aniZipData.episodeCount,
+    specialCount: aniZipData.specialCount,
+    episodes: aniZipData.episodes || [], // AniZip provides detailed episode info when available
+    specials: aniZipData.specials || [],
+    
+    // Keep AniList specific fields
+    ...(aniListData.synonyms && { synonyms: aniListData.synonyms }),
+    ...(aniListData.countryOfOrigin && { countryOfOrigin: aniListData.countryOfOrigin }),
+    ...(aniListData.isLicensed !== undefined && { isLicensed: aniListData.isLicensed }),
+    ...(aniListData.isAdult !== undefined && { isAdult: aniListData.isAdult }),
+    ...(aniListData.externalLinks && { externalLinks: aniListData.externalLinks }),
+    ...(aniListData.season && { season: aniListData.season }),
+    ...(aniListData.seasonYear && { seasonYear: aniListData.seasonYear }),
+    ...(aniListData.type && { type: aniListData.type }),
+    ...(aniListData.format && { format: aniListData.format }),
+    ...(aniListData.status && { status: aniListData.status }),
+    ...(aniListData.duration && { duration: aniListData.duration }),
+    ...(aniListData.chapters && { chapters: aniListData.chapters }),
+    ...(aniListData.volumes && { volumes: aniListData.volumes }),
+    ...(aniListData.trailer && { trailer: aniListData.trailer }),
+    ...(aniListData.source && { source: aniListData.source }),
+    ...(aniListData.averageScore && { averageScore: aniListData.averageScore }),
+    ...(aniListData.popularity && { popularity: aniListData.popularity }),
+    ...(aniListData.meanScore && { meanScore: aniListData.meanScore }),
+    ...(aniListData.nextAiringEpisode && { nextAiringEpisode: aniListData.nextAiringEpisode }),
+    ...(aniListData.recommendations && { recommendations: aniListData.recommendations }),
+    ...(aniListData.studios && { studios: aniListData.studios }),
+    ...(aniListData.startDate && { startDate: aniListData.startDate }),
+    ...(aniListData.endDate && { endDate: aniListData.endDate }),
+  };
+}
 
 export const handler = async (req: Request): Promise<Response> => {
   try {
@@ -43,9 +120,32 @@ export const handler = async (req: Request): Promise<Response> => {
     }
 
     const cacheKey = `info:${id}:${JSON.stringify(fields)}`;
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-        return createResponse(cached);
+    
+    // Check for cache clear parameter
+    if (url.searchParams.get("clearCache") === "true") {
+      if (redis && isRedisEnabled()) {
+        try {
+          await redis.del(cacheKey);
+          return createResponse(JSON.stringify({ message: "Cache cleared" }));
+        } catch (error) {
+          console.warn('Redis cache clear failed:', error);
+        }
+      }
+    }
+    
+    // Check for cache bypass parameter
+    const bypassCache = url.searchParams.get("bypassCache") === "true";
+    
+    // Only try to get from cache if Redis is available and working AND not bypassing cache
+    if (redis && isRedisEnabled() && !bypassCache) {
+      try {
+        const cached = await redis.get(cacheKey);
+        if (cached) {
+            return createResponse(JSON.stringify(cached));
+        }
+      } catch (error) {
+        console.warn('Redis cache read failed:', error);
+      }
     }
 
     // Fetch data from both AniList and AniZip in parallel
@@ -54,24 +154,22 @@ export const handler = async (req: Request): Promise<Response> => {
         aniZip.getInfo("anime", parseInt(id))
     ]);
 
-    if (!aniListData) {
+    if (!aniListData && !aniZipData) {
         return createResponse(JSON.stringify({ error: "No data found." }), 400);
     }
 
-    // Merge AniList and AniZip data
-    const mergedData = {
-        ...aniListData,
-        // Add AniZip specific data if available
-        ...(aniZipData && {
-            mappings: aniZipData.mappings,
-            episodeCount: aniZipData.episodeCount,
-            specialCount: aniZipData.specialCount,
-            episodes: aniZipData.episodes,
-        })
-    };
+    // Merge the data using our mapping function
+    const mergedData = mergeAnimeData(aniListData, aniZipData);
 
-    // Cache the merged data
-    await redis.set(cacheKey, JSON.stringify(mergedData));
+    // Cache the merged data if Redis is available and working
+    if (redis && isRedisEnabled()) {
+      try {
+        await redis.set(cacheKey, mergedData, { ex: 3600 }); // Cache for 1 hour
+      } catch (error) {
+        console.warn('Redis cache write failed:', error);
+      }
+    }
+    
     return createResponse(JSON.stringify(mergedData));
   } catch (e) {
       console.error(e);
@@ -85,14 +183,4 @@ const route = {
     rateLimit: 90,
 };
 
-// Insert the route into the database
-await db.insert(routes).values({
-    path: route.path,
-    rateLimit: route.rateLimit
-  }).onConflictDoUpdate({
-    target: routes.path,
-    set: {
-      rateLimit: route.rateLimit
-    }
-  });
 export default route;

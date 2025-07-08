@@ -1,30 +1,42 @@
-import type { Redis } from "ioredis";
+import { redis, isRedisEnabled } from './redis';
 
-const fetch = async <T>(redis: Redis | undefined, key: string, fetcher: () => T, expires: number) => {
-  if (!redis) return fetcher();
-  const existing = await get<T>(redis, key);
+const fetch = async <T>(key: string, fetcher: () => T, expires: number) => {
+  if (!redis || !isRedisEnabled()) return fetcher();
+  const existing = await get<T>(key);
   if (existing !== null) return existing;
 
-  return set(redis, key, fetcher, expires);
+  return set(key, fetcher, expires);
 };
 
-const get = async <T>(redis: Redis | undefined, key: string): Promise<T | null> => {
-  if (!redis) return null;
-  const value = await redis.get(key);
-  if (value === null) return null;
-
-  return JSON.parse(value);
+const get = async <T>(key: string): Promise<T | null> => {
+  if (!redis || !isRedisEnabled()) return null;
+  try {
+    const value = await redis.get(key);
+    if (value === null) return null;
+    return value as T;
+  } catch (error) {
+    console.warn('Redis get failed:', error);
+    return null;
+  }
 };
 
-const set = async <T>(redis: Redis | undefined, key: string, data: T, expires: number) => {
-  if (!redis) return data;
-  await redis.set(key, JSON.stringify(data), "EX", expires);
+const set = async <T>(key: string, data: T, expires: number) => {
+  if (!redis || !isRedisEnabled()) return data;
+  try {
+    await redis.set(key, data, { ex: expires });
+  } catch (error) {
+    console.warn('Redis set failed:', error);
+  }
   return data;
 };
 
-const del = async (redis: Redis | undefined, key: string) => {
-  if (!redis) return;
-  await redis.del(key);
+const del = async (key: string) => {
+  if (!redis || !isRedisEnabled()) return;
+  try {
+    await redis.del(key);
+  } catch (error) {
+    console.warn('Redis del failed:', error);
+  }
 };
 
-export default { fetch, set, get, del };
+export { fetch, get, set, del };

@@ -71,7 +71,9 @@ export class AnizoneScraper extends AnimeScraper {
   async search(query: string, page: number = 1): Promise<SearchResult[]> {
     await this.initialize();
     try {
-      const response = await fetch(`${this.baseUrl}/search?keyword=${encodeURIComponent(query)}&page=${page}`, {
+      const url = `${this.baseUrl}/anime?search=${encodeURIComponent(query)}&page=${page}`;
+      console.log('Fetching URL:', url); // DEBUG: Log the URL being fetched
+      const response = await fetch(url, {
         headers: {
           'Cookie': this.sessionCookie || '',
           ...this.headers
@@ -82,21 +84,35 @@ export class AnizoneScraper extends AnimeScraper {
       const $ = load(html);
       
       const results: SearchResult[] = [];
-      
-      $('.film_list-wrap .flw-item').each((_, el) => {
+
+      // Updated selector for new Anizone layout
+      $('div.relative.overflow-hidden.h-26.rounded-lg').each((_, el) => {
         const $el = $(el);
-        const title = $el.find('.film-name a').text().trim();
-        const url = $el.find('.film-name a').attr('href');
-        const id = url?.split('/').pop() || '';
-        const image = $el.find('.film-poster img').attr('data-src');
-        const type = $el.find('.fd-infor .fdi-item:first-child').text().trim();
-        
+        const titleNode = $el.find('.h-6 a').contents().get(0);
+        let title = '';
+        if (titleNode && titleNode.type === 'text') {
+          title = titleNode.data.trim();
+        }
+        // Remove any trailing genre text or excessive whitespace from title
+        title = title.replace(/\s+$/, '');
+        const url = $el.find('.h-6 a').attr('href');
+        const id = url ? url.split('/').pop() : '';
+        const image = $el.find('.absolute img').attr('src');
+        const type = $el.find('.inline.text-xs.h-4.line-clamp-1 span').first().text().trim();
+        // Extract genres from tag links
+        const genres: string[] = [];
+        $el.find('div.flex.flex-wrap.gap-2.line-clamp-1.h-6 a').each((_, genreEl) => {
+          const genre = $(genreEl).text().trim();
+          if (genre) genres.push(genre);
+        });
+
         if (title && id) {
           results.push({
             id,
             title,
             type,
-            image: image || undefined
+            image: image || undefined,
+            genres
           });
         }
       });
@@ -123,42 +139,107 @@ export class AnizoneScraper extends AnimeScraper {
       
       const html = await response.text();
       const $ = load(html);
-      
-      const title = $('.ani_detail-stage .anis-content .anisc-detail h2.film-name').text().trim();
-      const description = $('.ani_detail-stage .anis-content .anisc-detail .film-description').text().trim();
-      const coverImage = $('.ani_detail-stage .anis-content .anisc-poster img').attr('src') || null;
-      const bannerImage = $('.ani_detail-stage').attr('style')?.match(/url\((.*?)\)/)?.[1] || null;
-      
-      const genres = $('.anisc-info .item:contains("Genre") a')
-        .map((_, el) => $(el).text().trim())
-        .get();
-      
-      const status = $('.anisc-info .item:contains("Status") .name').text().trim();
-      const episodeCount = parseInt($('.anisc-info .item:contains("Episodes") .name').text().trim()) || undefined;
-      
-      // Get episodes
-      const episodes = await this.getEpisodes(id);
-      
+
+      // Title
+      const title = $('h1.text-xl').first().text().trim();
+
+      // Description (Synopsis)
+      let description = '';
+      // Try to find the synopsis div with the new structure
+      const synopsisDiv = $('div.text-slate-100.text-center.lg\\:text-start.text-sm.md\\:text-base.xl\\:text-lg');
+      if (synopsisDiv.length) {
+        const synopsisText = synopsisDiv.find('div').first().text().trim();
+        if (synopsisText) {
+          description = synopsisText;
+        }
+      }
+      // Fallback: look for a <h3> with 'Synopsis', then the next <p>
+      if (!description) {
+        const synopsisHeader = $('h3').filter((_: number, el: any) => $(el).text().toLowerCase().includes('synopsis')).first();
+        if (synopsisHeader.length) {
+          description = synopsisHeader.nextAll('p').first().text().trim();
+        }
+      }
+      // Fallback: look for a <p> under a section with 'Synopsis'
+      if (!description) {
+        description = $('section:contains("Synopsis") p').first().text().trim();
+      }
+      // Fallback: look for any <p> with a lot of text
+      if (!description) {
+        description = $('p').filter((_: number, el: any) => $(el).text().length > 100).first().text().trim();
+      }
+
+      // Banner Image
+      let bannerImage = null;
+      const bannerImgEl = $('div.absolute.top-\\[67px\\].w-full.-z-10.h-0.pb-96.-mx-4.bg-gray-900.opacity-75.overflow-clip img').first();
+      if (bannerImgEl.length) {
+        bannerImage = bannerImgEl.attr('src') || null;
+      }
+
+      // Cover Image
+      let coverImage = null;
+      const coverImgEl = $('img.bg-gray-700.hover\\:cursor-zoom-in.max-w-auto.xs\\:max-w-\\[400px\\].max-h-\\[400px\\].rounded-md.drop-shadow-lg').first();
+      if (coverImgEl.length) {
+        coverImage = coverImgEl.attr('src') || null;
+      }
+      // Fallback: look for any img with alt attribute (cover images usually have alt text)
+      if (!coverImage) {
+        const fallbackImgEl = $('img[alt]').first();
+        if (fallbackImgEl.length) {
+          coverImage = fallbackImgEl.attr('src') || null;
+        }
+      }
+
+      // Genres
+      let genres: string[] = [];
+      // Try to find genres in the new structure
+      const genreContainer = $('div.flex.flex-wrap.gap-2.justify-center.lg\\:justify-start');
+      if (genreContainer.length) {
+        genres = genreContainer.find('a').map((_: number, a: any) => $(a).text().trim()).get();
+      }
+      // Fallback: find any genre tag container with the old structure
+      if (!genres.length) {
+        genres = $('div.flex.flex-wrap.gap-2.line-clamp-1.h-6 a').map((_: number, a: any) => $(a).text().trim()).get();
+      }
+
+      // Episode Count
+      let episodeCount: number | undefined = undefined;
+      // Try to find episode count in the new structure
+      $('div.text-slate-100.text-xs.lg\\:text-base.flex.flex-wrap.justify-center.gap-2.sm\\:gap-6 span').each((_: number, el: any) => {
+        const text = $(el).text().trim();
+        if (/\d+\s*Episodes/i.test(text)) {
+          const match = text.match(/(\d+)/);
+          if (match) episodeCount = parseInt(match[1]);
+        }
+      });
+      // Fallback: look for a span with 'Eps' or 'Episodes' in old structure
+      if (!episodeCount) {
+        $('div.inline.text-xs.h-4.line-clamp-1 span').each((_: number, el: any) => {
+          const text = $(el).text().trim();
+          if (/\d+\s*Eps/i.test(text) || /Episodes/i.test(text)) {
+            const match = text.match(/(\d+)/);
+            if (match) episodeCount = parseInt(match[1]);
+          }
+        });
+      }
+      // Fallback: look for a number in the header area
+      if (!episodeCount) {
+        const headerText = $('div.inline.text-xs.h-4.line-clamp-1').text();
+        const match = headerText.match(/(\d+)\s*Eps/);
+        if (match) episodeCount = parseInt(match[1]);
+      }
       return {
         id,
         title: {
           english: title,
-          romaji: null,
-          native: null
+          romaji: title,
+          native: title
         },
         coverImage,
         bannerImage,
         description,
         genres,
         episodeCount,
-        episodes: episodes.map(ep => ({
-          number: ep.number,
-          title: ep.title || null,
-          image: ep.image,
-          summary: undefined,
-          rating: null,
-          type: 'episode' as const
-        })),
         characters: [],
         relations: []
       };
@@ -168,62 +249,32 @@ export class AnizoneScraper extends AnimeScraper {
     }
   }
 
-  private mapStatus(status: string): MediaStatus {
-    switch (status.toLowerCase()) {
-      case 'currently airing':
-      case 'ongoing':
-        return MediaStatus.RELEASING;
-      case 'finished airing':
-      case 'completed':
-        return MediaStatus.FINISHED;
-      case 'not yet aired':
-        return MediaStatus.NOT_YET_RELEASED;
-      case 'cancelled':
-        return MediaStatus.CANCELLED;
-      case 'on hiatus':
-        return MediaStatus.HIATUS;
-      default:
-        return MediaStatus.NOT_YET_RELEASED;
-    }
-  }
-
   /**
    * Get episodes for an anime
    */
   async getEpisodes(id: string): Promise<AnimeEpisode[]> {
     await this.initialize();
     try {
-      const response = await fetch(`${this.baseUrl}/ajax/episode/list/${id}`, {
-        headers: {
-          'Cookie': this.sessionCookie || '',
-          'X-CSRF-TOKEN': this.csrfToken || '',
-          ...this.headers
-        }
-      });
+      // First get the anime info to get the episode count
+      const animeInfo = await this.getInfo(id);
+      const episodeCount = animeInfo.episodeCount;
       
-      const html = await response.text();
-      const $ = load(html);
+      if (!episodeCount) {
+        console.warn('No episode count found for anime:', id);
+        return [];
+      }
       
       const episodes: AnimeEpisode[] = [];
       
-      $('.ss-list .ssl-item').each((_, el) => {
-        const $el = $(el);
-        const title = $el.find('.ssli-detail .name').text().trim();
-        const number = parseInt($el.find('.ssli-order').text().trim());
-        const image = $el.find('.ssl-image img').attr('src');
-        
-        if (number) {
-          episodes.push({
-            id: `${id}/${number}`,
-            number,
-            title: title || undefined,
-            image: image || undefined,
-            isFiller: false
-          });
-        }
-      });
+      // Generate episodes from 1 to episodeCount
+      for (let episodeNumber = 1; episodeNumber <= episodeCount; episodeNumber++) {
+        episodes.push({
+          id: `${id}/${episodeNumber}`,
+          number: episodeNumber
+        });
+      }
       
-      return episodes.sort((a, b) => a.number - b.number);
+      return episodes;
     } catch (error) {
       console.error('Error getting episodes:', error);
       return [];
@@ -236,11 +287,13 @@ export class AnizoneScraper extends AnimeScraper {
   async getSources(episodeId: string): Promise<AnimeSource[]> {
     await this.initialize();
     try {
+      console.log('Getting sources for episode:', episodeId);
       const [animeId, episodeNumber] = episodeId.split('/');
-      const response = await fetch(`${this.baseUrl}/ajax/episode/servers?episodeId=${episodeNumber}&id=${animeId}`, {
+      const episodeUrl = `${this.baseUrl}/anime/${animeId}/${episodeNumber}`;
+      
+      const response = await fetch(episodeUrl, {
         headers: {
           'Cookie': this.sessionCookie || '',
-          'X-CSRF-TOKEN': this.csrfToken || '',
           ...this.headers
         }
       });
@@ -250,10 +303,10 @@ export class AnizoneScraper extends AnimeScraper {
       
       const sources: AnimeSource[] = [];
       
-      // Extract stream URL from media-player element
+      // Extract master.m3u8 URL from media-player element
       const mediaPlayerSrc = $('media-player').attr('src');
       
-      if (mediaPlayerSrc && mediaPlayerSrc.includes('.m3u8')) {
+      if (mediaPlayerSrc && mediaPlayerSrc.includes('master.m3u8')) {
         sources.push({
           url: mediaPlayerSrc,
           quality: '1080p', // Anizone typically provides 1080p streams
@@ -271,7 +324,4 @@ export class AnizoneScraper extends AnimeScraper {
     }
   }
 
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
 }
