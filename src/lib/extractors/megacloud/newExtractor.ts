@@ -100,14 +100,14 @@ async function getDecryptionKey() {
     }
 }
 
-export const getSources = async (embedUrl: string, referrer = 'https://megacloud.blog') => {
+export const getSources = async (embedUrl: string, referrer = 'https://megacloud.blog', customHeaders?: Record<string, string>) => {
     try {
         if (!embedUrl) throw new Error('embedUrl is required');
 
         const id = extractId(embedUrl);
-        const apiUrl = `${MEGACLOUD_URL}/embed-2/v2/e-1/getSources?id=${id}`;
+        const apiUrl = `${MEGACLOUD_URL}/embed-2/v3/e-1/getSources?id=${id}`;
 
-        const headers = {
+        const headers = customHeaders || {
             Referer: referrer || embedUrl,
             Origin: 'https://megacloud.blog/',
             'User-Agent': 'Mozilla/5.0',

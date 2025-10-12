@@ -30,7 +30,8 @@
     "@types/pg": "^8.11.10",
     "@upstash/redis": "^1.35.1",
     "axios": "^1.7.9",
-    "cheerio": "^1.0.0",
+    "axios-cookiejar-support": "^6.0.3",
+    "cheerio": "^1.1.0",
     "colors": "^1.4.0",
     "crypto": "^1.0.1",
     "crypto-js": "^4.2.0",
@@ -43,6 +44,7 @@
     "nanoid": "^5.0.7",
     "pg": "^8.13.0",
     "postgres": "^3.4.4",
+    "tough-cookie": "^5.1.2",
     "util": "^0.12.5"
   }
 }

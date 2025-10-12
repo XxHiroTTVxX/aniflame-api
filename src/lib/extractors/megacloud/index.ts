@@ -29,15 +29,21 @@ export class MegaCloud extends VideoExtractor {
 
   async extract(url: string, maxRetries = 3, initialDelay = 1000): Promise<string | null> {
     let retryCount = 0;
+    const referer = 'https://megacloud.blog'; // Match manual test (no trailing slash)
+    const headers = {
+      'x-site': 'anicrush',
+      'Referer': referer,
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    };
     
     while (retryCount < maxRetries) {
       try {
         console.log(`[MegaCloud] Attempt ${retryCount + 1}/${maxRetries} for URL:`, url);
         const embedUrl = new URL(url);
-        const referer = this.host;
 
         console.log('[MegaCloud] Calling getSources...');
-        const response = await getSources(embedUrl.href, referer);
+        // Pass headers to getSources if supported, otherwise update getSources to accept headers
+        const response = await getSources(embedUrl.href, referer, headers);
         console.log('[MegaCloud] Response from getSources:', response);
         
         if (typeof response !== 'object' || response === null || !Array.isArray((response as any).sources)) {
