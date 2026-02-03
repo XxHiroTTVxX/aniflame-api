@@ -1,6 +1,6 @@
 import colors from "colors";
 import { rateLimitMiddleware } from "../utils/rateLimit.ts";
-import { db  } from "../db";
+import { db } from "../db";
 import { apiKeys } from "../db/schema";
 import { trackApiKeyUsage } from "../lib/middleware";
 
@@ -51,7 +51,8 @@ export const startServer = async () => {
 
   const routeFiles = [
     await import("./routes/info.ts"),
-    await import("./routes/generateKey.ts")
+    await import("./routes/generateKey.ts"),
+    await import("./routes/sources.ts")
   ];
 
   for (const file of routeFiles) {
@@ -59,10 +60,10 @@ export const startServer = async () => {
     const route = routeModule.default;
 
     if (route) {
-        const { path, handler, rateLimit } = route;
-        routes[path] = { path, handler, rateLimit };
+      const { path, handler, rateLimit } = route;
+      routes[path] = { path, handler, rateLimit };
     }
-}
+  }
 
   console.log(
     colors.gray(
@@ -79,7 +80,7 @@ export const startServer = async () => {
 
         if (url.pathname === "/") {
           return new Response(
-            JSON.stringify({ 
+            JSON.stringify({
               message: "Welcome to Anidex!",
               description: "Anidex is a powerful anime indexing and streaming platform",
               features: [
@@ -118,7 +119,7 @@ export const startServer = async () => {
         // Track API key usage with endpoint info
         const pathName = `/${url.pathname.split("/").slice(1)[0]}`;
         await trackApiKeyUsage(
-          apiKey, 
+          apiKey,
           req,  // Ensure the request object is passed
           undefined  // Optional status parameter
         );

@@ -8,7 +8,9 @@
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
     "push": "drizzle-kit push",
-    "seed": "bun run src/scrapers/anime/utils/gogo.seed.ts",
+    "seed:anizone": "bun run src/scrapers/anime/anizone/seed.ts",
+    "seed:animepahe": "bun run src/scrapers/anime/animePahe/seed.ts",
+    "test:sources": "bun run src/tests/test-sources.ts",
     "map": "bun run scripts/map.ts",
     "start:bot": "bun run src/bot/index.ts",
     "start:admin": "bun run src/admin/index.ts"

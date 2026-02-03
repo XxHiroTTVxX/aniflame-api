@@ -1,72 +1,81 @@
 import { VideoExtractor } from '../video-extractor';
-import { getSources } from './newExtractor';
 
-interface Track {
-  file: string;
-  label: string;
-  kind: string;
-}
-
-interface StreamData {
-  sources: Array<{
-    file: string;
-    type: string;
-  }>;
-  tracks: Track[];
-  intro?: {
-    start: number;
-    end: number;
-  };
-  outro?: {
-    start: number;
-    end: number;
-  };
-}
+const CLIENT_KEY_PATTERN = /([a-zA-Z0-9]{48})|x: "([a-zA-Z0-9]{16})", y: "([a-zA-Z0-9]{16})", z: "([a-zA-Z0-9]{16})"};/;
+const SOURCE_ID_PATTERN = /embed-2\/v3\/e-1\/([a-zA-Z0-9]+)\?/;
 
 export class MegaCloud extends VideoExtractor {
   protected serverName = 'MegaCloud';
-  protected host = 'https://anicrush.to';
+  protected host = 'https://megacloud.blog';
 
   async extract(url: string, maxRetries = 3, initialDelay = 1000): Promise<string | null> {
     let retryCount = 0;
-    const referer = 'https://megacloud.blog'; // Match manual test (no trailing slash)
-    const headers = {
-      'x-site': 'anicrush',
-      'Referer': referer,
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    };
-    
+
     while (retryCount < maxRetries) {
       try {
         console.log(`[MegaCloud] Attempt ${retryCount + 1}/${maxRetries} for URL:`, url);
-        const embedUrl = new URL(url);
 
-        console.log('[MegaCloud] Calling getSources...');
-        // Pass headers to getSources if supported, otherwise update getSources to accept headers
-        const response = await getSources(embedUrl.href, referer, headers);
-        console.log('[MegaCloud] Response from getSources:', response);
-        
-        if (typeof response !== 'object' || response === null || !Array.isArray((response as any).sources)) {
-          console.log('[MegaCloud] Invalid response structure:', response);
-          throw new Error(`Invalid response from getSources for ${url}`);
+
+
+        const idMatch = url.match(SOURCE_ID_PATTERN);
+        if (!idMatch) {
+          throw new Error('Could not extract video ID from URL');
+        }
+        const videoId = idMatch[1];
+
+        // Step 3: Call
+        console.log('[MegaCloud] Extracting client key from embed page...');
+        const clientKey = await this.extractClientKey(url);
+        if (!clientKey) return null;
+        console.log(`[MegaCloud] Got client key: ${clientKey.substring(0, 10)}...`);
+
+        const apiUrl = `${this.host}/embed-2/v3/e-1/getSources?id=${videoId}&_k=${clientKey}`;
+        console.log('[MegaCloud] Calling getSources API...');
+
+        const response = await fetch(apiUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+            'Referer': url,
+            'Origin': this.host,
+            'Accept': 'application/json',
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const data = response as unknown as StreamData;
-        console.log('[MegaCloud] Parsed data sources:', data.sources);
+        const data = await response.json() as any;
+        console.log('[MegaCloud] API response:', data);
 
-        // Return the first HLS source URL if available
-        const hlsSource = data.sources.find(s => s.type === 'hls');
-        console.log('[MegaCloud] Found HLS source:', hlsSource);
-        return hlsSource ? hlsSource.file : null;
+        // Step 4: Extract HLS source
+        if (!data.sources || !Array.isArray(data.sources) || data.sources.length === 0) {
+          throw new Error('No sources in response');
+        }
+
+        // Find HLS source
+        const hlsSource = data.sources.find((s: any) => s.type === 'hls' || s.file?.includes('.m3u8'));
+
+        if (hlsSource && hlsSource.file) {
+          console.log('[MegaCloud] Found HLS source:', hlsSource.file);
+          return hlsSource.file;
+        }
+
+        // Fallback to first source
+        if (data.sources[0]?.file) {
+          console.log('[MegaCloud] Using first source:', data.sources[0].file);
+          return data.sources[0].file;
+        }
+
+        throw new Error('No valid HLS source found');
 
       } catch (error) {
         console.error(`[MegaCloud] Error on attempt ${retryCount + 1}:`, error);
-        
+
         if (retryCount === maxRetries - 1) {
           console.error("[MegaCloud] All retry attempts failed");
           return null;
         }
-        
+
         // Exponential backoff
         const delay = initialDelay * Math.pow(2, retryCount);
         console.log(`[MegaCloud] Waiting ${delay}ms before retry...`);
@@ -74,8 +83,45 @@ export class MegaCloud extends VideoExtractor {
         retryCount++;
       }
     }
-    
+
     return null;
+  }
+
+  private async extractClientKey(embedUrl: string): Promise<string | null> {
+    const response = await fetch(embedUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+        'Referer': this.host + '/',
+        'Origin': this.host,
+      }
+    });
+
+    const html = await response.text();
+
+    // Check for "File not found" page
+    if (html.includes('<title>File not found') || html.includes('File was deleted')) {
+      console.log('[MegaCloud] Source file missing/deleted on provider.');
+      return null; // Return null to indicate soft failure
+    }
+
+    // Strategy 1: Check for Meta Tag (New method)
+    const metaMatch = html.match(/name="_gg_fb"\s+content="([a-zA-Z0-9]+)"/);
+    if (metaMatch) {
+      return metaMatch[1];
+    }
+
+    // Strategy 2: Check for regex patterns (Old method)
+    const match = html.match(CLIENT_KEY_PATTERN);
+
+    if (!match) {
+      // Dump partial HTML to log for debugging if we fail repeatedly
+      console.log(`[MegaCloud] HTML Dump: ${html.substring(0, 500)}`);
+      throw new Error('Client key pattern not found in embed page');
+    }
+
+    // Filter out undefined and join
+    const keyParts = match.slice(1).filter(Boolean);
+    return keyParts.join('');
   }
 }
 

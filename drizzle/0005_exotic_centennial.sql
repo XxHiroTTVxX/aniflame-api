@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS "anime_sources_anilist_idx";

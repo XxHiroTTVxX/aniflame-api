@@ -22,7 +22,7 @@ export class AnimePahe extends AnimeScraper {
   private sessionCookie?: string;
 
   constructor() {
-    super("https://animepahe.ru");
+    super("https://animepahe.si");
     
     // Headers for browser-like requests
     this.browserHeaders = {

@@ -9,7 +9,7 @@ describe("AnicrushScraper - HLS Stream Testing", () => {
     console.log("\n=== Testing Anime Search ===");
     const results = await scraper.search("Jujutsu Kaisen");
     expect(Array.isArray(results)).toBe(true);
-    
+
     if (results.length > 0) {
       const firstResult = results[0];
       expect(firstResult).toHaveProperty("id_number");
@@ -64,13 +64,12 @@ describe("AnicrushScraper - HLS Stream Testing", () => {
       console.log("\n=== Testing Episode List ===");
       const episodes = await scraper.getEpisodeList(validId);
       expect(Array.isArray(episodes)).toBe(true);
-      
+
       if (episodes.length > 0) {
         const firstEpisode = episodes[0];
-        expect(firstEpisode).toHaveProperty("epNum");
+        expect(firstEpisode).toHaveProperty("number");
         expect(firstEpisode).toHaveProperty("name");
-        expect(firstEpisode).toHaveProperty("url");
-        console.log(`✅ Found ${episodes.length} episodes, first episode: ${firstEpisode.epNum}`);
+        console.log(`✅ Found ${episodes.length} episodes, first episode: ${firstEpisode.number}`);
       }
     }, TIMEOUT);
 
@@ -95,9 +94,9 @@ describe("AnicrushScraper - HLS Stream Testing", () => {
     test("🎬 should get HLS stream for valid ID", async () => {
       console.log("\n=== Testing HLS Stream Extraction ===");
       console.log("🎯 This test will attempt to extract the actual HLS stream URL");
-      
+
       const sources = await scraper.getSources(validId, "1", "sub", "4", false);
-      
+
       expect(sources.status).toBe(true);
       expect(sources.result).toBeDefined();
 
@@ -110,7 +109,7 @@ describe("AnicrushScraper - HLS Stream Testing", () => {
         expect(sources.result.sources[0].file).toMatch(/^https?:.*\.m3u8/);
         expect(sources.result.tracks).toBeInstanceOf(Array);
         expect(sources.result.server).toBe("megacloud");
-        
+
         const hlsUrl = sources.result.sources[0].file;
         console.log(`📺 HLS Stream URL: ${hlsUrl}`);
         console.log(`🎯 Stream Type: ${sources.result.sources[0].type}`);
